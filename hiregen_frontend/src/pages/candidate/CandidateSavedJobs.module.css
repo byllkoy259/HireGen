@@ -1,0 +1,753 @@
+/* ─── Đồng bộ Hệ Màu Tiêu Chuẩn của Nền tảng ──── */
+:root {
+    --primary: #0066cc;
+    --primary-hover: #0052a3;
+    --primary-light: #e6f0fa;
+    --text-main: #1a1a1a;
+    --text-secondary: #4d4d4d;
+    --text-muted: #808080;
+    --border-color: #e0e0e0;
+    --bg-main: #f8f9fa;
+    --bg-card: #ffffff;
+    --success-color: #008a4b;
+    --success-light: #e6f5ed;
+    --warning-color: #d97706;
+}
+
+/* ─── Topbar & Thanh Tìm kiếm ─── */
+.searchTopbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0 24px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.searchWrap {
+    flex: 1;
+    min-width: 280px;
+    max-width: 500px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.searchWrap:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.searchInput {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    flex: 1;
+    background: transparent;
+    color: var(--text-main);
+}
+
+.searchClear {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.metaCountBadge {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    background: var(--primary-light);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #cce0f5;
+}
+
+.btnExplorePrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btnExplorePrimary:hover {
+    background: var(--primary-hover);
+}
+
+/* ─── Khung Layout 2 Trạng thái Split ─── */
+.bodyLayout {
+    display: flex;
+    flex: 1;
+    min-height: 650px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.leftPanel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.leftPanelSplit {
+    flex: 0 0 380px;
+    max-width: 380px;
+    border-right: 1px solid var(--border-color);
+}
+
+.listContainer {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* ─── Item trong danh sách ─── */
+.listItem {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    position: relative;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.listItem:hover {
+    background: var(--bg-main);
+}
+
+.listItemActive {
+    background: var(--primary-light);
+    border-bottom-color: transparent;
+}
+
+.listActiveLine {
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 4px;
+    background: var(--primary);
+    border-radius: 0 4px 4px 0;
+}
+
+.liLogoPlaceholder {
+    width: 36px;
+    height: 36px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.liInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.liHeaderRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.liTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.btnRemoveIcon {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.btnRemoveIcon:hover {
+    color: #dc2626;
+}
+
+.liCompany {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0 0 8px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.liMeta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.liBadges {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.liLevelPill {
+    font-size: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--text-muted);
+}
+
+.listItemActive .liLevelPill {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.badgeAppliedMini {
+    background: var(--success-light);
+    color: var(--success-color);
+    font-size: 9px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 600;
+}
+
+.liSalary {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--warning-color);
+}
+
+/* ─── CỘT PHẢI: CHI TIẾT CÔNG VIỆC ─── */
+.detailPanel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: var(--bg-card);
+}
+
+.detailHeader {
+    padding: 24px 30px 20px;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    background: var(--bg-card);
+    z-index: 10;
+}
+
+.dhTopRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.dhLogoBox {
+    width: 56px;
+    height: 56px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.dhActionGroup {
+    display: flex;
+    gap: 10px;
+}
+
+.actionBtnRemove {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px solid #fee2e2;
+    background: #fff5f5;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #dc2626;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.actionBtnRemove:hover {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.dhTitle {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+}
+
+.dhCompanyInfo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0 0 20px 0;
+}
+
+.dhCompanyName {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.dhBullet {
+    color: var(--border-color);
+}
+
+.dhOverviewGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    background: var(--bg-main);
+    padding: 14px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.overviewItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.overviewLabel {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.overviewValSalary {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--warning-color);
+}
+
+.overviewVal {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* Nội dung JD */
+.detailBody {
+    padding: 24px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.sectionBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sectionHeading {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    padding-left: 10px;
+    border-left: 3px solid var(--primary);
+}
+
+.detailTagsWrapper {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.detailSkillTag {
+    font-size: 13px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.detailSkillTagPrimary {
+    background: var(--primary-light);
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.contentList {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.contentList li {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.paragraphText {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Detail Footer ứng tuyển dính đáy */
+.detailFooter {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-card);
+    padding: 16px 30px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+}
+
+.dfLeft {
+    display: flex;
+    flex-direction: column;
+}
+
+.dfActionNote {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.dfDeadlineNote {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.btnApplyPrimary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btnApplyPrimary:hover {
+    background: var(--primary-hover);
+}
+
+.appliedAlertBlock {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--success-light);
+    border: 1px solid var(--success-color);
+    color: var(--success-color);
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* ─── Trạng thái Trống & Spin ─── */
+.emptyContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+}
+
+.emptyCircle {
+    width: 56px;
+    height: 56px;
+    background: var(--bg-main);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.emptyTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 6px 0;
+}
+
+.emptyDesc {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 360px;
+    margin: 0 0 20px 0;
+    line-height: 1.5;
+}
+
+.btnResetFilter {
+    background: var(--primary);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.btnResetFilter:hover {
+    background: var(--primary-hover);
+}
+
+/* ─── Modal & Toast ─── */
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modalBox {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modalTop {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modalHeading {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.btnCloseModal {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.modalContent {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.targetJobSummary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-main);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.targetJobLogo {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.targetJobDetails p { margin: 0; }
+.targetJobTitle { font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 2px; }
+.targetJobSub { font-size: 12px; color: var(--text-muted); }
+
+.fieldWrapper { display: flex; flex-direction: column; gap: 8px; }
+.fieldLabel { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+
+.cvAttachmentBox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.cvFileIcon {
+    background: #ffede0;
+    color: #e85d04;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.cvFileInfo p { margin: 0; }
+.cvFileName { font-size: 13px; font-weight: 600; color: var(--text-main); }
+.cvFileDetail { font-size: 11px; color: var(--text-muted); }
+
+.textareaInput {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.textareaInput:focus { border-color: var(--primary); }
+
+.modalBottom {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btnCancelModal {
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btnConfirmModal {
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btnConfirmModal:hover:not(:disabled) { background: var(--primary-hover); }
+.btnConfirmModal:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cvSelectDropdown {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    margin-bottom: 6px;
+}
+
+.toastPopup {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-main);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 2000;
+}
+
+.toastError { background: #dc2626 !important; }

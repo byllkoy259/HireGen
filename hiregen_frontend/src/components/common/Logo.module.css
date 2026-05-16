@@ -1,0 +1,75 @@
+.logoWrapper {
+  display: flex;
+  align-items: center;
+  user-select: none;
+  font-family: 'Manrope', sans-serif;
+}
+
+/* ================= SIZES ================= */
+.sm {
+  gap: 12px;
+}
+.sm .brandName {
+  font-size: 18px;
+  font-weight: 700;
+}
+.sm .iconBox {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+}
+.sm .kanji {
+  font-size: 16px;
+}
+
+.lg {
+  gap: 16px;
+}
+.lg .iconBox {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.lg .kanji {
+  font-size: 30px;
+  font-weight: 700;
+}
+.lg .brandName {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 40px;
+  margin: 0;
+}
+
+/* Base Icon Box */
+.iconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ================= VARIANTS ================= */
+/* Light variant (Dùng cho nền Navy bên trái) */
+.light .iconBox {
+  background-color: #ffffff;
+}
+.light .kanji {
+  color: #1E4076;
+}
+.light .brandName {
+  color: #ffffff;
+}
+
+/* Dark variant (Dùng cho nền Trắng ở màn Mobile) */
+.dark .iconBox {
+  background-color: #1E4076;
+}
+.dark .kanji {
+  color: #ffffff;
+}
+.dark .brandName {
+  color: #1E4076;
+}

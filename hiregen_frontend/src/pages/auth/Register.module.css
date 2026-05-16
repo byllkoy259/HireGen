@@ -1,0 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* ✅ Cần đảm bảo html, body không scroll — thêm vào index.css nếu chưa có:
+   html, body { height: 100%; overflow: hidden; }
+*/
+
+.layout {
+    display: flex;
+    flex-direction: column;
+    /* ✅ Đổi min-height → height để layout không vượt quá viewport */
+    height: 100vh;
+    width: 100vw;
+    font-family: 'Manrope', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+    overflow: hidden; /* ✅ Ngăn layout tự scroll */
+}
+
+/* ================= LEFT SIDE (BRAND) ================= */
+.brandSide {
+    display: none;
+    width: 40%;
+    background-color: #1E4076;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    /* ✅ Cố định chiều cao bằng parent */
+    flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+    .layout {
+        flex-direction: row;
+    }
+    .brandSide {
+        display: flex;
+    }
+}
+
+.brandPattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.1;
+    background-image: radial-gradient(circle at 20% 30%, #ffffff 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+.brandFooter {
+    position: absolute;
+    bottom: 32px;
+    left: 32px;
+    right: 32px;
+    color: #8fadea;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ================= RIGHT SIDE (FORM) ================= */
+.formSide {
+    flex: 1;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    padding: 40px 24px;
+    /* ✅ Chỉ phần này scroll, không ảnh hưởng bên trái */
+    overflow-y: auto;
+    /* ✅ Bỏ align-items: center để scroll hoạt động đúng khi nội dung dài */
+    align-items: flex-start;
+}
+
+.formWrapper {
+    width: 100%;
+    max-width: 400px;
+    /* ✅ Căn giữa theo chiều dọc khi nội dung ngắn hơn viewport */
+    margin: auto;
+}
+
+/* Mobile Brand */
+.mobileBrand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+    .mobileBrand {
+        display: none;
+    }
+}
+
+/* Form Headers */
+.formHeader {
+    margin-bottom: 24px;
+}
+
+.formTitle {
+    color: #191c1e;
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 44px;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px 0;
+}
+
+.formSubtitle {
+    color: #5d5f5f;
+    font-size: 15px;
+    font-weight: 400;
+    margin: 0;
+}
+
+/* AntD Overrides */
+.inputLabel {
+    color: #43474f;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.customInput {
+    height: 48px;
+    border-radius: 8px;
+    background-color: #f2f4f6;
+    border-color: #c4c6d1;
+    font-size: 15px;
+}
+
+.customInput:focus, .customInput:hover {
+    border-color: #1E4076;
+    box-shadow: none;
+}
+
+.loginPromptWrapper {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.actionLink {
+    color: #1E4076;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.actionLink:hover {
+    text-decoration: underline;
+    color: #00295d;
+}
+
+.submitBtn {
+    height: 48px;
+    background-color: #1E4076;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.submitBtn:hover, .submitBtn:focus {
+    background-color: #00295d !important;
+    border-color: #00295d !important;
+}
+
+/* Google OAuth Button & Divider */
+.dividerText {
+    color: #747781 !important;
+    font-size: 13px !important;
+    margin: 24px 0 !important;
+}
+
+.googleBtn {
+    height: 48px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    border-color: #c4c6d1;
+    color: #43474f;
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+
+.googleBtn:hover {
+    background-color: #f7f9fb !important;
+    border-color: #a5a8b5 !important;
+    color: #191c1e !important;
+}
+
+/* Terms and Conditions */
+.termsSection {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 13px;
+    color: #747781;
+    line-height: 1.5;
+    padding: 0 16px;
+    /* ✅ Thêm padding bottom để nội dung cuối không bị sát mép khi scroll */
+    padding-bottom: 40px;
+}
+
+.termsSection a {
+    color: #1E4076;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.termsSection a:hover {
+    color: #00295d;
+    text-decoration: underline;
+}

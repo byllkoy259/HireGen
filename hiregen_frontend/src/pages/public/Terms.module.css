@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+.layoutContainer {
+    font-family: 'Manrope', sans-serif;
+    background-color: #f7f9fb;
+    color: #191c1e;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Navbar ── */
+.navbar {
+    position: sticky; top: 0; z-index: 50;
+    background-color: #ffffff; border-bottom: 1px solid #E2E8F0; width: 100%;
+}
+.navContainer {
+    display: flex; justify-content: space-between; align-items: center;
+    max-width: 1280px; margin: 0 auto; padding: 16px 32px;
+}
+.navLinks { display: flex; align-items: center; gap: 32px; }
+.navLinks a { font-size: 14px; font-weight: 500; color: #475569; text-decoration: none; transition: color 0.3s; }
+.navLinks a:hover { color: #1e4076; }
+.navActions { display: flex; align-items: center; gap: 16px; }
+.btnOutline { border-color: #1e4076 !important; color: #1e4076 !important; font-weight: 600 !important; }
+.btnPrimary { background-color: #1e4076 !important; border-color: #1e4076 !important; font-weight: 600 !important; }
+
+/* ── Header Khối Pháp lý ── */
+.headerBlock {
+    background-color: #1e4076; padding: 60px 32px; text-align: center; color: #ffffff;
+}
+.headerInner h1 { font-size: 32px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; }
+.headerInner p { font-size: 14px; color: #acc7ff; margin: 0; font-weight: 500; }
+
+/* ── Nội dung chính ── */
+.contentMain { padding: 60px 32px; flex: 1; }
+.paperCard {
+    max-width: 860px; margin: 0 auto; background: #ffffff; border: 1px solid #E2E8F0;
+    border-radius: 16px; padding: 48px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+
+.termSection { margin-bottom: 40px; }
+.termSection:last-child { margin-bottom: 0; }
+.termSection h2 { font-size: 20px; font-weight: 700; color: #1e4076; margin: 0 0 16px 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+.termSection p { font-size: 15px; color: #475569; line-height: 1.8; margin: 0 0 16px 0; }
+.termSection p:last-child { margin-bottom: 0; }
+
+.highlightCallout {
+    background: #f0fdfa; border-left: 4px solid #0f6e68; padding: 20px; border-radius: 0 8px 8px 0; margin: 16px 0;
+}
+.highlightCallout p { color: #0f6e68; font-size: 14px; margin-bottom: 12px; }
+.highlightCallout p:last-child { margin-bottom: 0; }
+.highlightCallout p strong { color: #000; }
+
+.bulletList { margin: 0 0 16px 0; padding-left: 20px; }
+.bulletList li { font-size: 15px; color: #475569; line-height: 1.8; margin-bottom: 8px; }
+.bulletList li:last-child { margin-bottom: 0; }
+
+/* ── Footer ── */
+.footer { border-top: 1px solid #E2E8F0; background: #ffffff; }
+.footerBottom { padding: 24px; text-align: center; color: #94a3b8; font-size: 13px; font-weight: 500; }
+
+@media (max-width: 768px) {
+    .paperCard { padding: 32px 20px; }
+    .headerBlock { padding: 40px 20px; }
+    .headerInner h1 { font-size: 24px; }
+}

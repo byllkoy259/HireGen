@@ -1,0 +1,27 @@
+# --- Python Core ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- Virtual Environments ---
+venv/
+env/
+.venv/
+
+# --- Environment Variables ---
+.env
+.env.local
+!.env.example
+
+# --- IDE Settings ---
+.vscode/
+
+# --- Node Modules ---
+node_modules/
+
+# --- Logs ---
+*.log
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db

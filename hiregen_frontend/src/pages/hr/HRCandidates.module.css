@@ -1,0 +1,404 @@
+/* Inherits CSS variables từ HRLayout.module.css:
+   --primary, --surface, --surface-white, --outline, --text-main, --text-muted */
+
+/* ── Shared button (giống HRDashboard) ───────────────────────── */
+.btnOutline {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 20px;
+    height: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--outline);
+    background: white;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btnOutline:hover { border-color: var(--primary); color: var(--primary); }
+.btnOutline .material-symbols-outlined { font-size: 18px; }
+
+/* ── Summary chips ────────────────────────────────────────────── */
+.summaryStrip {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--outline);
+    background: white;
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: 0.18s;
+}
+.chip:hover { border-color: var(--primary); color: var(--primary); }
+.chip .material-symbols-outlined { font-size: 16px; }
+
+.chipActive {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+.chipActive:hover { background: #152e55; color: white; }
+
+/* ── Filter bar ───────────────────────────────────────────────── */
+.filterBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.filterLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.filterSelect {
+    height: 36px;
+    padding: 0 28px 0 12px;
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    background: white;
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    min-width: 140px;
+    transition: 0.18s;
+}
+.filterSelect:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,64,118,0.08); }
+
+.searchBox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    padding: 0 12px;
+    height: 36px;
+    min-width: 200px;
+    transition: 0.18s;
+}
+.searchBox:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(30,64,118,0.08); }
+.searchBox .material-symbols-outlined { font-size: 16px; color: #94a3b8; flex-shrink: 0; }
+
+.searchInput {
+    border: none; outline: none; background: transparent;
+    font-size: 13px; font-family: 'Manrope', sans-serif;
+    color: var(--text-main); width: 100%;
+}
+.searchInput::placeholder { color: #94a3b8; }
+
+.tabGroup {
+    display: flex;
+    gap: 4px;
+    background: white;
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    padding: 3px;
+}
+
+.tab {
+    font-family: 'Manrope', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: 0.15s;
+    white-space: nowrap;
+}
+.tab:hover { color: var(--primary); }
+.tabActive { background: var(--primary); color: white; }
+.tabActive:hover { background: #152e55; color: white; }
+
+.sortBtn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    background: white;
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: 0.18s;
+    white-space: nowrap;
+}
+.sortBtn:hover { border-color: var(--primary); color: var(--primary); }
+.sortBtn .material-symbols-outlined { font-size: 18px; }
+
+/* ── Card (giống HRDashboard) ────────────────────────────────── */
+.card {
+    background: white;
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Table ────────────────────────────────────────────────────── */
+.tableWrapper { flex: 1; overflow-x: auto; }
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Manrope', sans-serif;
+}
+
+.table thead { background: #f8fafc; border-bottom: 1px solid var(--outline); }
+
+.table th {
+    padding: 14px 20px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.thSort { cursor: pointer; user-select: none; }
+.thSort:hover { color: var(--primary); }
+
+.sortArrow { font-size: 11px; margin-left: 3px; color: #c4c6d1; }
+.sortActive { color: var(--primary); }
+
+.tr { border-top: 1px solid #f1f5f9; transition: background 0.15s; }
+.tr:hover { background: #fafbfc; }
+.table tbody td { padding: 14px 20px; vertical-align: middle; }
+
+/* Name cell */
+.nameCell { display: flex; align-items: center; gap: 12px; }
+
+.avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; color: white; flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+
+.avatarImg {
+    width: 36px; 
+    height: 36px; 
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    border: 1px solid var(--outline);
+}
+
+.cName {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 13px; font-weight: 700; color: var(--text-main);
+}
+
+.liTag {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 3px;
+    background: #0a66c2; color: white; font-size: 8px; font-weight: 800;
+}
+
+.pfLink {
+    color: #94a3b8; display: flex; align-items: center; text-decoration: none; transition: color 0.15s;
+}
+.pfLink:hover { color: var(--primary); }
+.pfLink .material-symbols-outlined { font-size: 13px; }
+
+.cLoc {
+    display: flex; align-items: center; gap: 2px;
+    font-size: 11px; color: var(--text-muted); margin-top: 2px;
+}
+.cLoc .material-symbols-outlined { font-size: 12px; color: #94a3b8; }
+
+/* Job */
+.jobTitle   { font-size: 13px; font-weight: 700; color: var(--text-main); line-height: 1.3; }
+.partnerName{ font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Match */
+.matchRow { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.matchPct  { font-size: 14px; font-weight: 800; }
+
+.matchTag {
+    font-size: 9px; font-weight: 800; padding: 2px 7px;
+    border-radius: 9999px; letter-spacing: 0.05em;
+}
+.tagGreen { background: #dcfce7; color: #166534; }
+.tagAmber { background: #fef3c7; color: #92400e; }
+.tagRed   { background: #fee2e2; color: #991b1b; }
+
+.barOuter {
+    width: 100px; height: 5px; background: #e8ecf0;
+    border-radius: 9999px; overflow: hidden;
+}
+.barInner { height: 100%; border-radius: 9999px; transition: width 0.6s ease; }
+
+/* ITSS */
+.itssBadge {
+    display: inline-block; font-size: 11px; font-weight: 600; color: var(--primary);
+    background: rgba(30,64,118,0.06); border: 1px solid rgba(30,64,118,0.12);
+    border-radius: 6px; padding: 2px 8px; margin-right: 5px;
+}
+.itssLvl {
+    font-size: 11px; font-weight: 700; color: #64748b;
+    background: #f1f5f9; border-radius: 5px; padding: 2px 7px;
+}
+.notEvalText {
+    font-size: 13px;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+/* Status badges */
+.statusBadge {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 9999px; white-space: nowrap;
+}
+.sPending      { background: #f0f9ff; color: #0369a1; }
+.sReviewing    { background: #fef9c3; color: #854d0e; }
+.sInterviewing { background: #e0f2fe; color: #1e4076; }
+.sRejected     { background: #fee2e2; color: #991b1b; }
+.sHired        { background: #dcfce7; color: #166534; }
+
+/* Date */
+.dateCell { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+
+/* Actions */
+.actionsCell { display: flex; align-items: center; gap: 6px; }
+
+.btnAI {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 700; font-family: 'Manrope', sans-serif;
+    background: rgba(30,64,118,0.06); color: var(--primary);
+    border: 1px solid rgba(30,64,118,0.15); border-radius: 7px;
+    padding: 6px 10px; cursor: pointer; transition: 0.15s; white-space: nowrap;
+}
+.btnAI:hover { background: var(--primary); color: white; }
+.btnAI .material-symbols-outlined { font-size: 15px; }
+
+.menuWrap { position: relative; }
+
+.menuBtn {
+    width: 32px; height: 32px; border-radius: 7px;
+    border: 1px solid var(--outline); background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-muted); transition: 0.15s;
+    font-family: 'Manrope', sans-serif;
+}
+.menuBtn:hover { background: #f1f5f9; color: var(--primary); }
+.menuBtn .material-symbols-outlined { font-size: 18px; }
+
+/* Dropdown */
+.fixedDropdown {
+    position: absolute; 
+    z-index: 9999;
+    background: white; 
+    border: 1px solid var(--outline); 
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); 
+    width: 200px; 
+    padding: 6px;
+    animation: fadeIn 0.14s ease;
+}
+@keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+.dropItem {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 8px 12px; border-radius: 7px;
+    font-size: 13px; font-weight: 600; font-family: 'Manrope', sans-serif;
+    color: var(--text-main); background: transparent; border: none;
+    cursor: pointer; text-align: left; transition: background 0.12s;
+}
+.dropItem:hover { background: #f1f5f9; color: var(--primary); }
+.dropItemActive { background: rgba(30,64,118,0.06); color: var(--primary); }
+.dropItem .material-symbols-outlined { font-size: 16px; color: var(--text-muted); }
+
+.dropDivider  { height: 1px; background: var(--outline); margin: 4px 0; }
+.dropLabel    { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 12px 2px; margin: 0; }
+
+.dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.sPendingDot      { background: #0369a1; }
+.sReviewingDot    { background: #d97706; }
+.sInterviewingDot { background: var(--primary); }
+.sRejectedDot     { background: #dc2626; }
+.sHiredDot        { background: #16a34a; }
+
+/* Empty states */
+.emptyState {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px; color: #94a3b8; font-size: 14px; gap: 8px;
+}
+.emptyState .material-symbols-outlined { font-size: 36px; color: #c4c6d1; }
+
+.emptyRow {
+    text-align: center; padding: 48px !important;
+    color: var(--text-muted); font-size: 14px;
+}
+.emptyRow .material-symbols-outlined { display: block; font-size: 36px; color: #c4c6d1; margin: 0 auto 8px; }
+
+/* ── Pagination ───────────────────────────────────────────────── */
+.pagination {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 20px; border-top: 1px solid #f1f5f9; background: #fafbfc;
+}
+.pgInfo { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+.pgControls { display: flex; align-items: center; gap: 4px; }
+
+.pgBtn {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 13px; font-weight: 700; font-family: 'Manrope', sans-serif;
+    border: 1px solid var(--outline); background: white; border-radius: 8px;
+    padding: 6px 12px; cursor: pointer; color: var(--text-main); transition: 0.18s;
+}
+.pgBtn:hover:not(.pgDisabled) { border-color: var(--primary); color: var(--primary); }
+.pgDisabled { opacity: 0.35; cursor: not-allowed; }
+.pgBtn .material-symbols-outlined { font-size: 16px; }
+
+.pgNum {
+    width: 32px; height: 32px; border-radius: 7px;
+    border: 1px solid var(--outline); background: white;
+    font-size: 13px; font-weight: 700; font-family: 'Manrope', sans-serif;
+    color: var(--text-main); cursor: pointer; transition: 0.18s;
+    display: flex; align-items: center; justify-content: center;
+}
+.pgNum:hover { border-color: var(--primary); color: var(--primary); }
+.pgNumActive { background: var(--primary); border-color: var(--primary); color: white; }
+.pgNumActive:hover { background: #152e55; color: white; }
+.pgEllipsis { color: var(--text-muted); font-size: 14px; padding: 0 3px; }

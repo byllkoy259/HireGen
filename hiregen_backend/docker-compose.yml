@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # 1. Cơ sở dữ liệu quan hệ (PostgreSQL)
+  postgres:
+    image: postgres:15-alpine
+    container_name: hiregen_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432" 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hiregen_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # 2. Cơ sở dữ liệu Vector (ChromaDB)
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: hiregen_chromadb
+    environment:
+      - IS_PERSISTENT=TRUE
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - hiregen_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # 3. Message Broker cho Celery (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: hiregen_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - hiregen_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # 4. Object Storage (MinIO)
+  minio:
+    image: minio/minio:latest
+    container_name: hiregen_minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - hiregen_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+# Khai báo volumes để dữ liệu không bị mất khi container bị dừng
+volumes:
+  postgres_data:
+  chroma_data:
+  redis_data:
+  minio_data:
+
+# Khai báo network riêng cho dự án
+networks:
+  hiregen_network:
+    driver: bridge

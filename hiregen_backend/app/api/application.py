@@ -1,0 +1,285 @@
+import json
+import uuid
+from typing import List, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
+
+from app.core.database import get_db
+from app.models.models import User, JobDescription, Application, Candidate, Resume, Company
+from app.schemas.application import ApplicationDetailResponse, ApplicationStatusUpdate
+from app.api.deps import get_current_hr
+
+router = APIRouter(
+    prefix="/api/hr/applications",
+    tags=["HR Application Management"]
+)
+
+def get_avatar_color(app_id: str) -> str:
+    """Tự động ánh xạ ID sang dải màu chuẩn của Ant Design."""
+    avatar_colors = [
+        '#1e4076', '#be185d', '#0369a1', '#059669',
+        '#7c3aed', '#b45309', '#db2777', '#0f766e',
+        '#dc2626', '#9333ea', '#0284c7', '#16a34a',
+    ]
+    char_sum = sum(ord(c) for c in app_id)
+    return avatar_colors[char_sum % len(avatar_colors)]
+
+def get_initials(name: str) -> str:
+    """Trích xuất chữ cái đầu viết tắt từ Tên ứng viên."""
+    if not name or name == "Chưa cập nhật":
+        return "U"
+    words = name.strip().split()
+    if len(words) == 1:
+        return words[0][0].upper()
+    return "".join(w[0] for w in words[-2:]).upper()
+
+# API lấy danh sách đơn ứng tuyển theo Job
+@router.get("/job/{job_id}", response_model=List[ApplicationDetailResponse])
+async def get_applications_by_job(
+    job_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_hr: User = Depends(get_current_hr)
+):
+    job_result = await db.execute(
+        select(JobDescription).where(JobDescription.id == job_id, JobDescription.hr_id == current_hr.id)
+    )
+    if not job_result.scalars().first():
+        raise HTTPException(status_code=403, detail="Bạn không có quyền xem đơn ứng tuyển của công việc này.")
+
+    query = (
+        select(Application)
+        .where(Application.job_id == job_id)
+        .options(
+            selectinload(Application.candidate), 
+            selectinload(Application.resume)
+        )
+        .order_by(Application.applied_at.desc())
+    )
+    
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+# API HR cập nhật trạng thái đơn ứng tuyển
+@router.put("/{app_id}/status", response_model=ApplicationDetailResponse)
+async def update_application_status(
+    app_id: uuid.UUID,
+    status_in: ApplicationStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_hr: User = Depends(get_current_hr)
+):
+    query = (
+        select(Application)
+        .join(JobDescription, Application.job_id == JobDescription.id)
+        .where(
+            Application.id == app_id,
+            JobDescription.hr_id == current_hr.id
+        )
+        .options(
+            selectinload(Application.candidate), 
+            selectinload(Application.resume)
+        )
+    )
+    
+    result = await db.execute(query)
+    application = result.scalars().first()
+    
+    if not application:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn ứng tuyển, hoặc bạn không có quyền thao tác.")
+
+    application.status = status_in.status
+    application.reviewed_by = current_hr.id
+
+    await db.commit()
+    await db.refresh(application)
+    
+    return application
+
+# API Lấy Báo Cáo AI Động (Hỗ trợ hoàn hảo Pure Generative AI Engine & Hybrid Fallback)
+@router.get("/{app_id}/ai-report")
+async def get_application_ai_report(
+    app_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_hr: User = Depends(get_current_hr)
+):
+    query = (
+        select(Application)
+        .options(
+            selectinload(Application.candidate).selectinload(Candidate.user), 
+            selectinload(Application.resume),
+            selectinload(Application.job).selectinload(JobDescription.company)
+        )
+        .join(JobDescription, Application.job_id == JobDescription.id)
+        .where(
+            Application.id == app_id,
+            JobDescription.hr_id == current_hr.id
+        )
+    )
+    
+    result = await db.execute(query)
+    application = result.scalars().first()
+    
+    if not application:
+        raise HTTPException(status_code=404, detail="Không tìm thấy hồ sơ hoặc bạn không có quyền truy cập.")
+
+    # 1. Parse an toàn dữ liệu JSON trích xuất từ Gemini
+    ext_data = application.extracted_data or {}
+    if isinstance(ext_data, str):
+        try:
+            ext_data = json.loads(ext_data)
+        except Exception:
+            ext_data = {}
+
+    personal_info = ext_data.get("personal_info", {})
+    itss_pred = ext_data.get("itss_prediction", {})
+    skills_list = ext_data.get("skills", [])
+    experience_list = ext_data.get("experience", [])
+
+    # 2. THU THẬP THÔNG TIN TÀI KHOẢN HỆ THỐNG (Ưu tiên hiển thị thông tin đăng ký thật)
+    candidate_profile = application.candidate
+    if candidate_profile:
+        applicant_name = candidate_profile.full_name or "Chưa cập nhật"
+        applicant_email = candidate_profile.user.email if getattr(candidate_profile, "user", None) else "Chưa cập nhật"
+        birth_year = candidate_profile.date_of_birth.year if getattr(candidate_profile, "date_of_birth", None) else "Chưa cập nhật"
+        location = getattr(candidate_profile, "address", None) or "Chưa cập nhật"
+        portfolio_url = getattr(candidate_profile, "portfolio_url", None) or ""
+        has_linkedin = bool(getattr(candidate_profile, "linkedin_url", None))
+    else:
+        applicant_name = "Chưa cập nhật"
+        applicant_email = "Chưa cập nhật"
+        birth_year = "Chưa cập nhật"
+        location = "Chưa cập nhật"
+        portfolio_url = ""
+        has_linkedin = False
+
+    # 3. TỰ ĐỘNG ĐỐI CHIẾU DANH TÍNH (So sánh tên CV vs Tên tài khoản)
+    cv_full_name = personal_info.get("full_name", "").strip()
+    name_check_alert = ""
+    if cv_full_name:
+        if cv_full_name.lower() == applicant_name.lower() or cv_full_name.lower() in applicant_name.lower() or applicant_name.lower() in cv_full_name.lower():
+            name_check_alert = f"Trực quan: Tên bóc tách từ CV khớp với thông tin tài khoản đăng ký."
+        else:
+            name_check_alert = f"LƯU Ý: Tên bóc tách từ file CV gốc là '{cv_full_name}', CÓ SỰ KHÁC BIỆT so với tên tài khoản nộp đơn ('{applicant_name}'). HR cần xác minh lại."
+    else:
+        name_check_alert = "Hệ thống AI chưa nhận diện được rõ ràng trường họ tên trong file CV gốc."
+
+    partner_name = application.job.company.name if application.job and getattr(application.job, "company", None) else "Đối tác chưa cập nhật"
+    job_title = application.job.title if application.job else "Vị trí ứng tuyển"
+    match_score = float(application.match_score) if application.match_score is not None else 0.0
+
+    app_id_str = str(application.id)
+    avatar_color = get_avatar_color(app_id_str)
+    initials = get_initials(applicant_name)
+
+    itss_category = application.job.itss_category if application.job and getattr(application.job, "itss_category", None) else "Software Development"
+    itss_level = f"Level {application.job.itss_level}" if application.job and getattr(application.job, "itss_level", None) else "Level 3"
+
+    ai_itss_predicted = itss_pred.get("category", itss_category)
+    ai_itss_level = f"Level {itss_pred.get('level', 3)}"
+
+    # 4. KÍCH HOẠT PURE GENERATIVE AI ENGINE HOẶC HYBRID FALLBACK
+    ai_report_data = ext_data.get("ai_report", {})
+    
+    if ai_report_data:
+        # Đơn nộp mới: Tận dụng trọn vẹn 100% tư duy sâu sắc do chính Gemini viết ra
+        ai_summary_raw = ai_report_data.get("ai_summary", "")
+        ai_summary = f"{name_check_alert}\n\n• Nhận xét từ AI Headhunter:\n{ai_summary_raw}"
+        radar_data = ai_report_data.get("radar_data", [])
+        gaps = ai_report_data.get("gaps", [])
+        ai_questions = ai_report_data.get("ai_questions", [])
+    else:
+        # Đơn nộp cũ: Fallback mượt mà về bộ logic động tính toán bằng mã nguồn
+        skills_str = ", ".join(skills_list[:6]) if skills_list else "các công nghệ nền tảng"
+        exp_count = len(experience_list)
+        exp_str = f"có {exp_count} mốc kinh nghiệm/dự án thực tế" if exp_count > 0 else "đang tập trung củng cố kiến thức học vấn và đồ án"
+        
+        ai_summary = (
+            f"{name_check_alert}\n\n"
+            f"• Đánh giá tổng quan: Ứng viên đạt mức tương quan {match_score}% so với yêu cầu JD. "
+            f"Hồ sơ phân tích cho thấy ứng viên {exp_str}, bộc lộ thế mạnh cốt lõi về {skills_str}. "
+            f"Năng lực chuyên môn hiện tại được trích xuất phù hợp với lộ trình {ai_itss_predicted} ({ai_itss_level}) theo hệ thống tiêu chuẩn kỹ năng ITSS của Nhật Bản."
+        )
+
+        tech_score = min(100, max(40, int(match_score + (len(skills_list) * 1.5))))
+        exp_score = 90 if exp_count >= 3 else (80 if exp_count == 2 else (70 if exp_count == 1 else 55))
+        
+        lang_score = 60
+        skills_dump = " ".join(skills_list).lower()
+        cv_text_dump = json.dumps(ext_data).lower()
+        if "n1" in skills_dump or "n2" in skills_dump or "jlpt n2" in cv_text_dump:
+            lang_score = 95
+        elif "n3" in skills_dump or "jlpt n3" in cv_text_dump:
+            lang_score = 85
+        elif "n4" in skills_dump or "n5" in skills_dump or "japanese" in skills_dump:
+            lang_score = 75
+        elif "ielts" in cv_text_dump or "toeic" in cv_text_dump or "english" in skills_dump:
+            lang_score = 70
+
+        soft_score = min(100, max(50, int(match_score * 0.85 + 25)))
+        culture_score = min(100, max(50, int(lang_score * 0.8 + 20)))
+
+        radar_data = [
+            {"label": "Chuyên môn",  "candidate": tech_score,    "required": 80},
+            {"label": "Kinh nghiệm", "candidate": exp_score,     "required": 75},
+            {"label": "Ngoại ngữ",   "candidate": lang_score,    "required": 70},
+            {"label": "Kỹ năng mềm", "candidate": soft_score,    "required": 75},
+            {"label": "Văn hóa Nhật","candidate": culture_score, "required": 80},
+        ]
+
+        gaps = []
+        if lang_score < 80:
+            gaps.append({
+                "skill": "Ngoại ngữ & Tiếng Nhật giao tiếp",
+                "required": 4, "actual": 2 if lang_score < 70 else 3,
+                "note": "Hồ sơ chưa thể hiện rõ chứng chỉ tiếng Nhật cấp độ cao (N2/N3). Khuyến nghị kiểm tra thêm khả năng đọc hiểu tài liệu kỹ thuật."
+            })
+        else:
+            gaps.append({
+                "skill": "Giao tiếp Tiếng Nhật thương mại",
+                "required": 4, "actual": 4,
+                "note": "Nền tảng ngoại ngữ đáp ứng tốt, có tiềm năng hòa nhập nhanh vào các quy trình báo cáo liên lạc (Horenso)."
+            })
+
+        sample_skill = skills_list[0] if skills_list else "lập trình chuyên môn"
+        sample_exp = experience_list[0].get("company", "các dự án trước đây") if experience_list else "các đồ án thực tế"
+        
+        ai_questions = [
+            {
+                "category": "Kỹ thuật chuyên sâu",
+                "question": f"Trong CV bạn có nêu bật kinh nghiệm sử dụng {sample_skill}. Hãy chia sẻ cụ thể một bài toán khó nhất bạn từng xử lý bằng công nghệ này?",
+                "intent": f"Kiểm chứng năng lực thực chiến và mức độ làm chủ công nghệ {sample_skill}."
+            },
+            {
+                "category": "Kinh nghiệm & Trách nhiệm",
+                "question": f"Trong quá trình làm việc tại {sample_exp}, bạn phối hợp giải quyết xung đột với các thành viên khác như thế nào?",
+                "intent": "Đánh giá tư duy làm việc nhóm và tinh thần trách nhiệm."
+            }
+        ]
+
+    return {
+        "application_id": app_id_str,
+        "applicant_name": applicant_name,
+        "applicant_email": applicant_email,
+        "birth_year": birth_year,
+        "location": location,
+        "avatar_color": avatar_color,
+        "initials": initials,
+        "job_title": job_title,
+        "partner_name": partner_name,
+        "match_score": match_score,
+        "itss_category": itss_category,
+        "itss_level": itss_level,
+        "status": application.status,
+        "applied_at": application.applied_at.isoformat() if application.applied_at else "",
+        "has_linkedin": True if getattr(candidate_profile, "linkedin_url", None) else False,
+        "portfolio_url": getattr(candidate_profile, "portfolio_url", None) or "",
+        "cv_url": application.resume.cv_url if application.resume else "",
+        "ai_itss_predicted": ai_itss_predicted,
+        "ai_itss_level": ai_itss_level,
+        "ai_summary": ai_summary,
+        "radar_data": radar_data,
+        "gaps": gaps,
+        "ai_questions": ai_questions
+    }

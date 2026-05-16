@@ -1,0 +1,227 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+.layout {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 100vw;
+    font-family: 'Manrope', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+}
+
+/* ================= LEFT SIDE (BRAND) ================= */
+.brandSide {
+    display: none;
+    width: 40%;
+    background-color: #1E4076;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    .layout {
+        flex-direction: row;
+    }
+    .brandSide {
+        display: flex;
+    }
+}
+
+.brandPattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.1;
+    background-image: radial-gradient(circle at 20% 30%, #ffffff 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+.brandFooter {
+    position: absolute;
+    bottom: 32px;
+    left: 32px;
+    right: 32px;
+    color: #8fadea;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ================= RIGHT SIDE (FORM) ================= */
+.formSide {
+    flex: 1;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+}
+
+.formWrapper {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Mobile Brand */
+.mobileBrand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 48px;
+}
+
+@media (min-width: 768px) {
+    .mobileBrand {
+        display: none;
+    }
+}
+
+/* Form Headers */
+.formHeader {
+    margin-bottom: 32px;
+}
+
+.formTitle {
+    color: #191c1e;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 48px;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px 0;
+}
+
+.formSubtitle {
+    color: #5d5f5f;
+    font-size: 16px;
+    font-weight: 400;
+    margin: 0;
+}
+
+/* AntD Overrides */
+.inputLabel {
+    color: #43474f;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.customInput {
+    height: 48px;
+    border-radius: 8px;
+    background-color: #f2f4f6;
+    border-color: #c4c6d1;
+    font-size: 16px;
+}
+
+.customInput:focus, .customInput:hover {
+    border-color: #1E4076;
+    box-shadow: none;
+}
+
+.forgotPasswordWrapper {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 4px;
+}
+
+.forgotPasswordLink {
+    color: #1E4076;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.forgotPasswordLink:hover {
+    text-decoration: underline;
+    color: #00295d;
+}
+
+.submitBtn {
+    height: 48px;
+    background-color: #1E4076;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.submitBtn:hover, .submitBtn:focus {
+    background-color: #00295d !important;
+    border-color: #00295d !important;
+}
+
+/* Alternative Actions */
+.registerSection {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 1px solid #e0e3e5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.registerText {
+    color: #5d5f5f;
+    font-size: 14px;
+    margin: 0;
+}
+
+.registerBtn {
+    height: 48px;
+    border-radius: 8px;
+    color: #1E4076;
+    border-color: #c4c6d1;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.registerBtn:hover {
+    background-color: #f2f4f6 !important;
+    color: #1E4076 !important;
+    border-color: #c4c6d1 !important;
+}
+
+/* Footer Links */
+.footerLinks {
+    margin-top: 64px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5d5f5f;
+}
+
+.footerLinksLeft {
+    display: flex;
+    gap: 24px;
+}
+
+.footerLinks a {
+    color: #5d5f5f;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.footerLinks a:hover {
+    color: #1E4076;
+}
+
+.footerLanguage {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.footerLanguage:hover {
+    color: #1E4076;
+}

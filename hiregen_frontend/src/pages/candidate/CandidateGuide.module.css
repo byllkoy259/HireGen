@@ -1,0 +1,471 @@
+/* ─── Đồng bộ Hệ Màu Tiêu Chuẩn ──── */
+:root {
+    --primary: #0066cc;
+    --primary-hover: #0052a3;
+    --primary-light: #e6f0fa;
+    --text-main: #1a1a1a;
+    --text-secondary: #4d4d4d;
+    --text-muted: #808080;
+    --border-color: #e0e0e0;
+    --bg-main: #f8f9fa;
+    --bg-card: #ffffff;
+}
+
+/* Kích hoạt Smooth Scroll mượt mà cho toàn bộ vùng hướng dẫn */
+.guideContainer {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    scroll-behavior: smooth;
+}
+
+@media (max-width: 1024px) {
+    .guideContainer {
+        flex-direction: column-reverse;
+    }
+}
+
+/* Nút Tải xuống trên Topbar */
+.btnDownloadAction {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btnDownloadAction:hover {
+    background: var(--primary-hover);
+}
+
+/* ── CỘT TRÁI: NỘI DUNG ── */
+.mainContentArea {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    min-width: 0; /* Ngăn vỡ layout khi nội dung dài */
+}
+
+@media (max-width: 768px) {
+    .mainContentArea {
+        padding: 20px;
+        gap: 32px;
+    }
+}
+
+/* Khu vực Tabs phân loại */
+.tabsWrapper {
+    margin-bottom: -16px;
+}
+
+.tabContentPlaceholder {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 4px 0 12px;
+}
+
+/* Các Section Khối nội dung */
+.sectionBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-margin-top: 100px; /* Căn lề bù đắp khoảng cách Header khi trượt Anchor */
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 2px solid var(--bg-main);
+    padding-bottom: 10px;
+}
+
+.sectionNumber {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--primary);
+    background: var(--primary-light);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sectionTitle {
+    display: flex;
+    align-items: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.headingIcon {
+    color: var(--primary);
+    margin-right: 8px;
+    font-size: 22px;
+}
+
+.leadParagraph {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Tương tác Collapse ITSS */
+.interactiveBlock {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.subTitle {
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 4px 0;
+}
+
+.instructionText {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 16px 0;
+}
+
+.collapseHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.levelBadgeTag {
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.levelTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.collapseContent p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0 0 8px 0;
+    line-height: 1.5;
+}
+
+.salaryExpectation {
+    font-size: 13px;
+    color: var(--text-main);
+    background: var(--bg-card);
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-block;
+    border: 1px solid var(--border-color);
+}
+
+.salaryText {
+    color: #d97706;
+    font-weight: 700;
+}
+
+/* Lưới 3 Trục Kỹ Năng */
+.pillarsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.pillarCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pillarIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+
+.pillarCard h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.pillarCard p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Danh sách tối ưu RAG */
+.standardList {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.standardList li {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.standardList li strong {
+    color: var(--text-main);
+}
+
+/* Hộp Checklist Tương Tác */
+.interactiveToolBox {
+    border: 1px solid #b8cff0;
+    background: var(--primary-light);
+    padding: 20px 24px;
+    border-radius: 10px;
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toolHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.toolHeader h3 {
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+    margin: 0;
+}
+
+.progressStatus {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary-hover);
+}
+
+.checklistItems {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.checkItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-card);
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.checkItem:hover {
+    border-color: var(--primary);
+}
+
+.checkItemDone {
+    background: #f0fdfa;
+    border-color: #ccfbf1;
+}
+
+.checkItemDone span {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.checkboxSquare {
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--text-muted);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #ffffff;
+    background: var(--bg-card);
+    flex-shrink: 0;
+}
+
+.checkItemDone .checkboxSquare {
+    background: #0f6e68;
+    border-color: #0f6e68;
+}
+
+.checkItem span {
+    font-size: 13px;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+/* Khối Agency & Văn hóa Phỏng vấn */
+.agencyInfoBox {
+    border-left: 4px solid #5b21b6;
+    background: #f5f3ff;
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+    margin-top: 8px;
+}
+
+.agencyInfoBox h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #5b21b6;
+    margin: 0 0 6px 0;
+}
+
+.agencyInfoBox p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Lưới Ho-Ren-So */
+.horensoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.hrsCard {
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    padding: 16px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hrsHeader {
+    font-size: 16px;
+    font-weight: 800;
+    color: #b45309;
+}
+
+.hrsHeader span {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.hrsCard p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* ── CỘT PHẢI: ANCHOR MENU (NEO STICKY CHUẨN XÁC) ── */
+.sideNavigationArea {
+    flex: 0 0 240px;
+    width: 240px;
+    position: sticky;
+    top: 80px; /* Căn chỉnh hoàn hảo dưới Topbar */
+    z-index: 10;
+}
+
+@media (max-width: 1024px) {
+    .sideNavigationArea {
+        flex: auto;
+        width: 100%;
+        position: static;
+    }
+}
+
+.anchorStickyBox {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.anchorTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Khung Tooltip Hỗ trợ Nhanh */
+.quickHelpBox {
+    border-top: 1px dashed var(--border-color);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.quickHelpTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.quickHelpBox p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.levelPillsContainer {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}

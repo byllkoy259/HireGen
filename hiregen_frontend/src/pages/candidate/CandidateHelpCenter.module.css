@@ -1,0 +1,673 @@
+/* ─── Đồng bộ Hệ Màu Tiêu Chuẩn của Phân hệ Candidate ──── */
+:root {
+    --primary: #0066cc;
+    --primary-hover: #0052a3;
+    --primary-light: #e6f0fa;
+    --text-main: #1a1a1a;
+    --text-secondary: #4d4d4d;
+    --text-muted: #808080;
+    --border-color: #e0e0e0;
+    --bg-main: #f8f9fa;
+    --bg-card: #ffffff;
+    --success-color: #008a4b;
+    --success-light: #e6f5ed;
+    --warning-color: #d97706;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    padding-bottom: 40px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── KHỐI TÌM KIẾM & BANNER (Redesigned - Clean & Modern) ─── */
+.headerBanner {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 32px 40px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.bannerTitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+}
+
+.bannerSub {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 24px auto;
+}
+
+.searchTopbar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.searchWrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.searchWrap:focus-within {
+    background: var(--bg-card);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.searchIcon {
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+}
+
+.searchInput {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    flex: 1;
+    background: transparent;
+    color: var(--text-main);
+}
+
+.searchInput::placeholder {
+    color: var(--text-muted);
+}
+
+.searchClear {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 4px;
+}
+
+.searchClear:hover {
+    color: var(--text-main);
+}
+
+.searchBtn {
+    padding: 10px 24px;
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+}
+
+.searchBtn:hover {
+    background: var(--primary-hover);
+}
+
+.tagCloud {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.tagLabel {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.chipBtn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chipBtn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+/* ─── CÁC KHỐI NỘI DUNG TỔNG QUAN ─── */
+.section {
+    display: flex;
+    flex-direction: column;
+}
+
+.sectionHeaderFlex {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 16px;
+}
+
+.sectionTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 4px 0;
+}
+
+.sectionSub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 20px 0;
+}
+
+.clearSearchBtn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+.clearSearchBtn:hover {
+    text-decoration: underline;
+}
+
+/* ─── KHỐI 1: DANH MỤC TRỌNG ĐIỂM (CATEGORY GRIDS) ─── */
+.categoryGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.categoryCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.categoryCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+    border-color: var(--primary);
+}
+
+.catIconWrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.catIconWrap span {
+    font-size: 22px;
+}
+
+.catTitle {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 8px 0;
+}
+
+.catDesc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+    flex-grow: 1;
+}
+
+.catLinkBtn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+
+.catLinkBtn:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+/* ─── KHỐI 2: FAQ COLLAPSE ─── */
+.faqWrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.customCollapse {
+    background: transparent !important;
+}
+
+.customCollapse :global(.ant-collapse-item) {
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+.customCollapse :global(.ant-collapse-item:last-child) {
+    border-bottom: none !important;
+}
+
+.customCollapse :global(.ant-collapse-header) {
+    padding: 16px 24px !important;
+    align-items: center !important;
+}
+
+.faqTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.faqAnswer {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+    padding: 0 8px 8px 8px;
+}
+
+.emptyFaq {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* ─── KHỐI 3: CẨM NANG & BÀI VIẾT ─── */
+.articlesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.articleCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.articleCard:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+    border-color: var(--primary);
+}
+
+.artThumbWrap {
+    position: relative;
+    height: 160px;
+    overflow: hidden;
+    background: var(--bg-main);
+}
+
+.artThumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.articleCard:hover .artThumb {
+    transform: scale(1.03);
+}
+
+.artTag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(26, 26, 26, 0.8);
+    backdrop-filter: blur(4px);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.artBody {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.artDate {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.artTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 16px 0;
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.readMoreBtn {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+    cursor: pointer;
+}
+
+.readMoreBtn:hover {
+    text-decoration: underline;
+}
+
+/* ─── KHỐI 4: CTA HỖ TRỢ CUỐI TRANG ─── */
+.ctaBox {
+    background: linear-gradient(135deg, #0066cc 0%, #004d99 100%);
+    border-radius: 16px;
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+    color: #ffffff;
+}
+
+.ctaContent {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+}
+
+.ctaTitle {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 12px 0;
+}
+
+.ctaDesc {
+    font-size: 14px;
+    color: var(--primary-light);
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+}
+
+.ctaButtonGroup {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btnCtaPrimary {
+    background: #ffffff;
+    color: var(--primary);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.btnCtaPrimary:hover {
+    background: var(--bg-main);
+}
+
+.btnCtaSecondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.btnCtaSecondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ctaDecoration {
+    position: absolute;
+    right: -20px;
+    bottom: -40px;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* ─── MODAL HỖ TRỢ ĐƯỢC THIẾT KẾ LẠI ĐỒNG BỘ ─── */
+.modalBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modalBox {
+    background: var(--bg-card);
+    width: 100%;
+    max-width: 500px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.modalTop {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modalHeading {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.btnCloseModal {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.btnCloseModal:hover {
+    color: var(--text-main);
+}
+
+.modalContent {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.fieldWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fieldLabel {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.formInput {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-main);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.formTextarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-main);
+    outline: none;
+    resize: vertical;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.formInput:focus, .formTextarea:focus {
+    border-color: var(--primary);
+}
+
+.modalBottom {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btnCancelModal {
+    background: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.btnCancelModal:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btnConfirmModal {
+    background: var(--primary);
+    color: #ffffff;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btnConfirmModal:hover:not(:disabled) {
+    background: var(--primary-hover);
+}
+
+.btnConfirmModal:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ─── TOAST POPUP ─── */
+.toastPopup {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text-main);
+    color: #ffffff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 2000;
+    animation: toastIn 0.3s ease-out;
+}
+
+.toastError {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+}
+
+@keyframes toastIn {
+    from { transform: translate(-50%, 100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* ─── RESPONSIVE MOBILE ─── */
+@media (max-width: 768px) {
+    .headerBanner {
+        padding: 24px 20px;
+    }
+    .ctaBox {
+        padding: 24px;
+    }
+    .ctaDecoration {
+        display: none;
+    }
+}

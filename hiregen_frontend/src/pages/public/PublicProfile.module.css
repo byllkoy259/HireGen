@@ -1,0 +1,177 @@
+@import url('https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@400;600&display=swap');
+
+/* --- GIAO DIỆN XEM TRÊN WEB --- */
+.page {
+    min-height: 100vh;
+    background: #525659; /* Màu nền giống trình xem PDF của Chrome */
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.loading, .error {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    color: white;
+}
+
+.topBar {
+    width: 100%;
+    max-width: 850px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btnDownload {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: 0.2s;
+}
+
+.btnDownload:hover {
+    background: #1d4ed8;
+}
+
+/* --- KHUNG HARVARD RESUME --- */
+.resumeDocument {
+    width: 100%;
+    max-width: 850px;
+    background: white;
+    padding: 60px 70px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    /* Harvard sử dụng font Serif cổ điển, Tinos là lựa chọn tốt nhất hỗ trợ Tiếng Việt */
+    font-family: 'Tinos', 'Times New Roman', Times, serif;
+    color: #000;
+    line-height: 1.35;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.name {
+    font-size: 18pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #000;
+    margin: 0 0 4px;
+    letter-spacing: 0.5px;
+}
+
+.contactInfo {
+    font-size: 11pt;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.separator {
+    margin: 0 2px;
+}
+
+/* Sections */
+.section {
+    margin-bottom: 16px;
+}
+
+.sectionTitle {
+    font-size: 12pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #000;
+    border-bottom: 1px solid #000;
+    margin: 0 0 10px;
+    padding-bottom: 2px;
+}
+
+/* Items */
+.itemBlock {
+    margin-bottom: 12px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11pt;
+    margin-bottom: 2px;
+}
+
+.row strong {
+    font-weight: bold;
+}
+
+.row span {
+    white-space: nowrap;
+}
+
+/* Bullets */
+.bulletList {
+    margin: 4px 0 0;
+    padding-left: 20px;
+}
+
+.bulletList li {
+    font-size: 11pt;
+    margin-bottom: 4px;
+    text-align: justify;
+}
+
+.skillLine {
+    font-size: 11pt;
+    margin-bottom: 4px;
+}
+
+@media print {
+    @page {
+        margin: 0.5in 0.8in;
+        size: A4 portrait;
+    }
+
+    body {
+        background: white !important;
+        margin: 0;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .page {
+        background: white !important;
+        padding: 0 !important;
+    }
+
+    .topBar {
+        display: none !important;
+    }
+
+    .resumeDocument {
+        padding: 0 !important;
+        box-shadow: none !important;
+        max-width: none !important;
+        width: 100% !important;
+    }
+
+    .resumeDocument,
+    .resumeDocument * {
+        color: #000 !important;
+    }
+}
