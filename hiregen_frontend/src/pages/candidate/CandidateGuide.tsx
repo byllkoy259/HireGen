@@ -308,7 +308,7 @@ const CandidateGuide: React.FC = () => {
                         
                         {/* Sơ đồ ITSS dạng Tag phân màu chuẩn IPA */}
                         <div className={styles.quickHelpBox}>
-                            <h4 className={styles.quickHelpTitle}>💡 Sơ đồ Cấp độ Nhanh</h4>
+                            <h4 className={styles.quickHelpTitle}>Sơ đồ Cấp độ Nhanh</h4>
                             <p>Di chuột vào các mốc để xem phân tích kỳ vọng từ hệ thống:</p>
                             <div className={styles.levelPillsContainer}>
                                 {ITSS_LEVELS_DATA.map(item => (

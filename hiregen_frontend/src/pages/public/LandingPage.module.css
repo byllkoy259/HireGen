@@ -8,69 +8,6 @@
     min-height: 100vh;
 }
 
-/* ===== NAVBAR ===== */
-.navbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background-color: #ffffff;
-    border-bottom: 1px solid #E2E8F0;
-    width: 100%;
-}
-
-.navContainer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 16px 32px;
-}
-
-.navLinks {
-    display: none;
-    align-items: center;
-    gap: 32px;
-}
-
-@media (min-width: 768px) {
-    .navLinks { display: flex; }
-}
-
-.navLinks a {
-    font-size: 14px;
-    font-weight: 500;
-    color: #475569;
-    text-decoration: none;
-    transition: color 0.3s;
-}
-
-.navLinks a:hover { color: #1e4076; }
-.navLinks a.activeLink {
-    color: #1e4076;
-    font-weight: 600;
-    border-bottom: 2px solid #1e4076;
-    padding-bottom: 4px;
-}
-
-.navActions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.btnOutline {
-    border-color: #1e4076 !important;
-    color: #1e4076 !important;
-    font-weight: 600 !important;
-}
-
-.btnPrimary {
-    background-color: #1e4076 !important;
-    border-color: #1e4076 !important;
-    font-weight: 600 !important;
-}
-
 /* ===== HERO SECTION ===== */
 .heroSection {
     position: relative;
@@ -240,7 +177,7 @@
     flex-direction: column;
     gap: 8px;
     width: 100%;
-    max-width: 780px;
+    max-width: 860px;
     align-items: stretch;
 }
 
@@ -278,16 +215,48 @@
 }
 
 .searchInput {
-    background-color: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    font-size: 15px !important;
-    color: #191c1e !important;
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
+    color: #191c1e;
 }
 
-.searchInput input::placeholder {
-    color: #94a3b8 !important;
+.searchInput::placeholder {
+    color: #94a3b8;
+}
+
+.locationSelect {
+    width: 100%;
+    cursor: pointer;
+}
+
+.locationSelect :global(.ant-select-selector) {
+    background-color: transparent !important;
+}
+
+.locationSelect :global(.ant-select-selection-item),
+.locationSelect :global(.ant-select-selection-placeholder) {
+    font-family: 'Manrope', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: #191c1e;
+}
+
+.searchClear {
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    line-height: 1;
+}
+
+.searchClear:hover {
+    color: #1e293b;
 }
 
 .searchDivider {
@@ -522,7 +491,7 @@
     border-top: 1px solid #f1f5f9;
 }
 
-.salary { color: #1e4076; font-weight: 700; font-size: 15px; }
+.salary { color: #d97706; font-weight: 700; font-size: 15px; }
 .time { color: #94a3b8; font-size: 12px; font-style: italic; }
 
 /* ===== TOP COMPANIES SECTION ===== */
@@ -760,7 +729,8 @@
 }
 
 .ctaCardEmployer {
-    background-color: #E0F2FE;
+    background: linear-gradient(135deg, #eef4ff 0%, #f8fafc 100%);
+    border: 1px solid rgba(30, 64, 118, 0.14);
     padding: 48px;
     border-radius: 16px;
     display: flex;
@@ -781,7 +751,7 @@
 }
 
 .ctaCardEmployer p {
-    color: #1e4076;
+    color: #475569;
     font-size: 15px;
     margin: 0;
     line-height: 1.6;
@@ -818,65 +788,3 @@
 }
 
 .ctaBtnPrimary:hover { opacity: 0.9; }
-
-/* ===== FOOTER ===== */
-.footer {
-    background-color: #ffffff;
-    border-top: 1px solid #E2E8F0;
-}
-
-.footerContainer {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 64px 32px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 48px;
-}
-
-@media (min-width: 768px) {
-    .footerContainer { grid-template-columns: 2fr 1fr 1fr 1fr; }
-}
-
-.footerBrand p {
-    color: #64748b;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.6;
-    margin-top: 24px;
-}
-
-.footerCol h4 {
-    color: #1e4076;
-    font-weight: 700;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin: 0 0 24px 0;
-}
-
-.footerCol a {
-    display: block;
-    color: #64748b;
-    font-size: 14px;
-    font-weight: 500;
-    text-decoration: none;
-    margin-bottom: 16px;
-    transition: color 0.3s;
-}
-
-.footerCol a:hover { color: #1e4076; }
-
-.footerBottom {
-    border-top: 1px solid #E2E8F0;
-    background-color: #ffffff;
-    padding: 24px 32px;
-    text-align: center;
-}
-
-.footerBottom p {
-    margin: 0;
-    color: #94a3b8;
-    font-size: 13px;
-    font-weight: 500;
-}

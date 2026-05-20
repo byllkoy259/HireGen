@@ -1,110 +1,170 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from 'antd';
-import Logo from '../../components/common/Logo';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
 import styles from './Terms.module.css';
 
 const Terms: React.FC = () => {
-    const navigate = useNavigate();
-
     return (
         <div className={styles.layoutContainer}>
-            {/* ── Top Navbar đồng bộ ── */}
-            <nav className={styles.navbar}>
-                <div className={styles.navContainer}>
-                    <div onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-                        <Logo size="sm" variant="dark" />
-                    </div>
-                    
-                    <div className={styles.navLinks}>
-                        <a onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>Trang chủ</a>
-                        <a onClick={() => navigate('/login?redirect=candidate/jobs')} style={{ cursor: 'pointer' }}>Việc làm</a>
-                        <a onClick={() => navigate('/candidate/guide')} style={{ cursor: 'pointer' }}>Cẩm nang IT Nhật</a>
-                    </div>
-                    
-                    <div className={styles.navActions}>
-                        <Button className={styles.btnOutline} onClick={() => navigate('/register')}>
-                            Đăng ký
-                        </Button>
-                        <Button type="primary" className={styles.btnPrimary} onClick={() => navigate('/login')}>
-                            Đăng nhập
-                        </Button>
-                    </div>
-                </div>
-            </nav>
+            <Header />
 
             {/* ── HEADER PHÁP LÝ ── */}
             <header className={styles.headerBlock}>
                 <div className={styles.headerInner}>
-                    <h1>Điều khoản Dịch vụ & Chính sách Bảo mật Dữ liệu</h1>
+                    <h1>Điều khoản sử dụng & Chính sách dữ liệu</h1>
                     <p>Cập nhật lần cuối: Tháng 5, 2026</p>
                 </div>
             </header>
 
-            {/* ── NỘI DUNG ĐIỀU KHOẢN CHI TIẾT ── */}
+            {/* ── NỘI DUNG ĐIỀU KHOẢN ── */}
             <main className={styles.contentMain}>
                 <div className={styles.paperCard}>
-                    
+                    <p className={styles.metaText}>
+                        Vui lòng đọc kỹ các điều khoản dưới đây trước khi sử dụng HireGen.
+                        Việc tiếp tục sử dụng hệ thống đồng nghĩa với việc bạn đã hiểu và đồng ý
+                        với phạm vi dịch vụ, cách xử lý dữ liệu và trách nhiệm của các bên liên quan.
+                    </p>
+
                     <section className={styles.termSection}>
-                        <h2>1. Mục đích và Phạm vi dịch vụ</h2>
+                        <h2>
+                            1. Mục đích và phạm vi dịch vụ
+                        </h2>
                         <p>
-                            HireGen hoạt động dưới mô hình nền tảng hỗ trợ tuyển dụng (Agency). Chúng tôi cung cấp công cụ tạo lập hồ sơ, phân tích năng lực bằng Trí tuệ nhân tạo (AI) và kết nối ứng viên với các doanh nghiệp đối tác tại thị trường Nhật Bản. Toàn bộ tính năng dành cho ứng viên tìm việc đều hoàn toàn miễn phí.
+                            HireGen là nền tảng hỗ trợ tuyển dụng theo mô hình Agency/Headhunt,
+                            cung cấp các công cụ tạo lập hồ sơ, phân tích năng lực ứng viên bằng
+                            Trí tuệ nhân tạo (AI) và hỗ trợ kết nối ứng viên với các cơ hội việc làm
+                            trong lĩnh vực IT tại thị trường Nhật Bản.
+                        </p>
+                        <p>
+                            Các tính năng dành cho ứng viên được cung cấp miễn phí trong phạm vi hệ thống,
+                            bao gồm tạo hồ sơ cá nhân, tải lên CV, ứng tuyển công việc và nhận hỗ trợ
+                            trong quá trình kết nối tuyển dụng.
                         </p>
                     </section>
 
                     <section className={styles.termSection}>
-                        <h2>2. Quyền riêng tư & Xử lý dữ liệu bằng AI</h2>
+                        <h2>
+                            2. Quyền riêng tư và xử lý dữ liệu bằng AI
+                        </h2>
+
+                        <p>
+                            Khi ứng viên tải lên CV hoặc cung cấp thông tin hồ sơ, HireGen có thể sử dụng
+                            các công cụ AI để hỗ trợ trích xuất, phân tích và chuẩn hóa dữ liệu như kỹ năng,
+                            học vấn, kinh nghiệm làm việc, chứng chỉ và thông tin nghề nghiệp liên quan.
+                        </p>
+
                         <div className={styles.highlightCallout}>
                             <p>
-                                <strong>Trích xuất dữ liệu:</strong> Khi ứng viên tải lên CV (định dạng PDF/Word), hệ thống AI của HireGen sẽ tự động quét, phân tích cấu trúc từ khóa (kinh nghiệm, kỹ năng, học vấn) để điền vào hồ sơ số.
+                                <strong>Mục đích xử lý dữ liệu:</strong> Dữ liệu được xử lý nhằm phục vụ
+                                các chức năng của hệ thống như tạo hồ sơ số, gợi ý việc làm, tính toán
+                                mức độ phù hợp với vị trí tuyển dụng và hỗ trợ quy trình tuyển dụng.
                             </p>
                             <p>
-                                <strong>Cam kết bảo mật:</strong> Dữ liệu sau khi AI xử lý chỉ được lưu trữ trên hệ thống máy chủ bảo mật của HireGen nhằm mục đích tính toán độ phù hợp (Match Score) với các công việc đang mở. Chúng tôi cam kết KHÔNG sử dụng dữ liệu CV của bạn để huấn luyện (train) các mô hình AI công cộng bên ngoài.
+                                <strong>Cam kết bảo mật:</strong> Dữ liệu CV và thông tin cá nhân của ứng viên
+                                chỉ được sử dụng trong phạm vi hoạt động của HireGen. Chúng tôi không sử dụng
+                                dữ liệu CV của bạn để huấn luyện các mô hình AI công cộng bên ngoài.
                             </p>
                         </div>
+
+                        <p>
+                            Do quá trình phân tích bằng AI có thể phát sinh sai lệch trong một số trường hợp,
+                            ứng viên có trách nhiệm kiểm tra lại thông tin đã được hệ thống trích xuất trước
+                            khi sử dụng hồ sơ để ứng tuyển.
+                        </p>
                     </section>
 
                     <section className={styles.termSection}>
-                        <h2>3. Quy trình chia sẻ hồ sơ (Consent-based)</h2>
+                        <h2>
+                            3. Quy trình chia sẻ hồ sơ dựa trên sự đồng ý
+                        </h2>
                         <p>
-                            HireGen tôn trọng tuyệt đối quyền quyết định của ứng viên. CV gốc và thông tin liên hệ cá nhân của bạn sẽ chỉ được gửi tới bộ phận tuyển dụng của doanh nghiệp Nhật Bản khi và chỉ khi:
+                            HireGen tôn trọng quyền kiểm soát dữ liệu của ứng viên. CV gốc, thông tin liên hệ
+                            cá nhân và các dữ liệu nhạy cảm liên quan đến hồ sơ ứng tuyển chỉ được chia sẻ với
+                            doanh nghiệp tuyển dụng trong các trường hợp sau:
                         </p>
+
                         <ul className={styles.bulletList}>
-                            <li>Bạn chủ động nhấn nút "Ứng tuyển" (Apply) vào một vị trí cụ thể.</li>
-                            <li>Hoặc bạn xác nhận đồng ý thông qua trao đổi trực tiếp với chuyên viên tư vấn (Headhunter) của HireGen.</li>
+                            <li>
+                                Ứng viên chủ động nhấn nút <strong>Ứng tuyển</strong> vào một vị trí cụ thể
+                                trên hệ thống.
+                            </li>
+                            <li>
+                                Ứng viên xác nhận đồng ý chia sẻ hồ sơ thông qua trao đổi trực tiếp với
+                                chuyên viên tư vấn hoặc nhân sự phụ trách của HireGen.
+                            </li>
+                            <li>
+                                Việc chia sẻ hồ sơ là cần thiết để phục vụ đúng mục đích tuyển dụng mà ứng viên
+                                đã lựa chọn hoặc đồng ý tham gia.
+                            </li>
                         </ul>
                     </section>
 
                     <section className={styles.termSection}>
-                        <h2>4. Trách nhiệm của Ứng viên</h2>
+                        <h2>
+                            4. Trách nhiệm của ứng viên
+                        </h2>
                         <p>
-                            Để đảm bảo uy tín của nguồn nhân lực IT Việt Nam trong mắt đối tác quốc tế, ứng viên sử dụng HireGen cam kết:
+                            Ứng viên có trách nhiệm đảm bảo tính chính xác, trung thực và cập nhật của các thông tin
+                            được cung cấp trên hệ thống HireGen.
                         </p>
+
                         <ul className={styles.bulletList}>
-                            <li>Cung cấp thông tin trung thực về bằng cấp, chứng chỉ ngoại ngữ (JLPT, TOEIC,...) và kinh nghiệm làm việc thực tế.</li>
-                            <li>Tuân thủ các quy tắc giao tiếp chuyên nghiệp (Ho-Ren-So) trong quá trình tham gia phỏng vấn do HireGen kết nối.</li>
+                            <li>
+                                Cung cấp thông tin đúng sự thật về học vấn, kinh nghiệm làm việc, kỹ năng chuyên môn,
+                                dự án đã tham gia và chứng chỉ liên quan.
+                            </li>
+                            <li>
+                                Không đăng tải hoặc sử dụng CV, tài liệu, chứng chỉ, thông tin cá nhân giả mạo
+                                hoặc thuộc về người khác.
+                            </li>
+                            <li>
+                                Tuân thủ quy trình trao đổi, phỏng vấn và phản hồi thông tin theo hướng dẫn của HireGen
+                                trong quá trình ứng tuyển.
+                            </li>
                         </ul>
                     </section>
 
                     <section className={styles.termSection}>
-                        <h2>5. Giới hạn trách nhiệm (Hệ thống ĐATN)</h2>
+                        <h2>
+                            5. Giới hạn trách nhiệm và phạm vi thử nghiệm
+                        </h2>
                         <p>
-                            Do HireGen hiện đang là phiên bản sản phẩm phát triển phục vụ Đồ án tốt nghiệp, một số tính năng kết nối hệ thống doanh nghiệp thực tế có thể hoạt động trong môi trường thử nghiệm (Sandbox).
+                            HireGen hiện là phiên bản sản phẩm được phát triển trong phạm vi Đồ án tốt nghiệp,
+                            do đó một số chức năng kết nối doanh nghiệp, xử lý dữ liệu hoặc quy trình tuyển dụng
+                            có thể được mô phỏng trong môi trường thử nghiệm.
                         </p>
                         <p>
-                            HireGen đóng vai trò là cầu nối tư vấn; quyết định tuyển dụng, ký kết hợp đồng lao động và mức lương cuối cùng hoàn toàn thuộc về thỏa thuận trực tiếp giữa ứng viên và doanh nghiệp đối tác.
+                            HireGen đóng vai trò là nền tảng hỗ trợ và cầu nối tư vấn. Quyết định tuyển dụng,
+                            ký kết hợp đồng lao động, mức lương, điều kiện làm việc và các thỏa thuận liên quan
+                            hoàn toàn thuộc về ứng viên và doanh nghiệp tuyển dụng.
+                        </p>
+                        <p>
+                            Các kết quả phân tích, gợi ý việc làm hoặc điểm đánh giá mức độ phù hợp do hệ thống cung cấp
+                            chỉ mang tính chất tham khảo và không được xem là cam kết tuyển dụng chính thức.
                         </p>
                     </section>
 
+                    <section className={styles.termSection}>
+                        <h2>
+                            6. Liên hệ hỗ trợ
+                        </h2>
+                        <p>
+                            Nếu có câu hỏi liên quan đến điều khoản sử dụng, chính sách dữ liệu hoặc cách hệ thống
+                            xử lý hồ sơ ứng viên, bạn có thể liên hệ với đội ngũ HireGen để được hỗ trợ và giải thích
+                            rõ hơn.
+                        </p>
+                    </section>
+
+                    <div className={styles.finalNote}>
+                        <p>
+                            Bằng việc sử dụng HireGen, bạn xác nhận rằng mình đã đọc, hiểu và đồng ý với các điều khoản
+                            được trình bày trên trang này.
+                        </p>
+                    </div>
                 </div>
             </main>
 
-            {/* ── Footer đồng bộ ── */}
-            <footer className={styles.footer}>
-                <div className={styles.footerBottom}>
-                    <p>© 2026 HireGen - Nền tảng tuyển dụng IT chuẩn ITSS Nhật Bản</p>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };

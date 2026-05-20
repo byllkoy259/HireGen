@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'antd';
 import Logo from '../../components/common/Logo';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
 import styles from './AboutUs.module.css';
 
 const AboutUs: React.FC = () => {
@@ -9,29 +11,7 @@ const AboutUs: React.FC = () => {
 
     return (
         <div className={styles.layoutContainer}>
-            {/* ── Top Navbar đồng bộ Landing Page ── */}
-            <nav className={styles.navbar}>
-                <div className={styles.navContainer}>
-                    <div onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-                        <Logo size="sm" variant="dark" />
-                    </div>
-                    
-                    <div className={styles.navLinks}>
-                        <a onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>Trang chủ</a>
-                        <a onClick={() => navigate('/login?redirect=candidate/jobs')} style={{ cursor: 'pointer' }}>Việc làm</a>
-                        <a onClick={() => navigate('/candidate/guide')} style={{ cursor: 'pointer' }}>Cẩm nang IT Nhật</a>
-                    </div>
-                    
-                    <div className={styles.navActions}>
-                        <Button className={styles.btnOutline} onClick={() => navigate('/register')}>
-                            Đăng ký
-                        </Button>
-                        <Button type="primary" className={styles.btnPrimary} onClick={() => navigate('/login')}>
-                            Đăng nhập
-                        </Button>
-                    </div>
-                </div>
-            </nav>
+            <Header />
 
             {/* ── KHỐI 1: HERO SECTION (Tuyên ngôn sứ mệnh) ── */}
             <section className={styles.heroSection}>
@@ -58,10 +38,10 @@ const AboutUs: React.FC = () => {
                     <div className={styles.storyVisual}>
                         {/* Khối hình ảnh thể hiện dấu ấn HUST & Tác giả */}
                         <div className={styles.visualCard}>
-                            <img 
-                                src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80" 
-                                alt="Quoc Bao Researching" 
-                                className={styles.authorImg} 
+                            <img
+                                src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80"
+                                alt="Quoc Bao Researching"
+                                className={styles.authorImg}
                             />
                             <div className={styles.universityBadge}>
                                 <span className="material-symbols-outlined" style={{ fontSize: 20 }}>school</span>
@@ -134,13 +114,16 @@ const AboutUs: React.FC = () => {
                     <div className={styles.thanksContent}>
                         <h2>Lời tri ân</h2>
                         <p>
-                            Tác giả xin gửi lời cảm ơn sâu sắc đến các Thầy/Cô hướng dẫn và Hội đồng đã tạo điều kiện để HireGen được hoàn thiện từ những dòng code đầu tiên.
+                            Từ một ý tưởng trong môi trường đại học, HireGen đã từng bước 
+                            được hoàn thiện nhờ sự đồng hành và định hướng tận tâm từ TS. Nguyễn Kiêm Hiếu 
+                            và Hội đồng chuyên môn. Những đóng góp ấy chính là nền tảng để dự án phát triển 
+                            thành một hệ thống mang tính ứng dụng thực tế.
                         </p>
                         <div className={styles.divider}></div>
                         <h3>Bạn đã sẵn sàng để nâng tầm sự nghiệp IT của mình tại thị trường Nhật Bản?</h3>
-                        <Button 
-                            type="primary" 
-                            size="large" 
+                        <Button
+                            type="primary"
+                            size="large"
                             className={styles.btnActionLarge}
                             onClick={() => navigate('/register')}
                         >
@@ -150,36 +133,7 @@ const AboutUs: React.FC = () => {
                 </div>
             </section>
 
-            {/* ── Footer ── */}
-            <footer className={styles.footer}>
-                <div className={styles.footerContainer}>
-                    <div className={styles.footerBrand}>
-                        <Logo size="sm" variant="dark" />
-                        <p>HireGen là nền tảng tuyển dụng IT hàng đầu dành cho thị trường Nhật Bản, kết nối nhân tài Việt với những cơ hội bứt phá sự nghiệp.</p>
-                    </div>
-                    <div className={styles.footerCol}>
-                        <h4>Ứng viên</h4>
-                        <a onClick={() => navigate('/login?redirect=candidate/jobs')} style={{ cursor: 'pointer' }}>Việc làm mới nhất</a>
-                        <a onClick={() => navigate('/login?redirect=candidate/profile')} style={{ cursor: 'pointer' }}>Tạo hồ sơ</a>
-                        <a onClick={() => navigate('/login?redirect=candidate/guide')} style={{ cursor: 'pointer' }}>Cẩm nang IT Nhật</a>
-                    </div>
-                    <div className={styles.footerCol}>
-                        <h4>Nhà tuyển dụng</h4>
-                        <a onClick={() => navigate('/login?redirect=hr/jobs')} style={{ cursor: 'pointer' }}>Đăng tin tuyển dụng</a>
-                        <a onClick={() => navigate('/login?redirect=hr/candidates')} style={{ cursor: 'pointer' }}>Tìm kiếm nhân tài</a>
-                        <a onClick={() => navigate('/login?redirect=hr/companies')} style={{ cursor: 'pointer' }}>Quản lý đối tác</a>
-                    </div>
-                    <div className={styles.footerCol}>
-                        <h4>Hệ thống</h4>
-                        <a onClick={() => navigate('/about')} style={{ cursor: 'pointer' }}>Về HireGen</a>
-                        <a onClick={() => navigate('/terms')} style={{ cursor: 'pointer' }}>Điều khoản</a>
-                        <a onClick={() => navigate('/candidate/help')} style={{ cursor: 'pointer' }}>Trung tâm hỗ trợ</a>
-                    </div>
-                </div>
-                <div className={styles.footerBottom}>
-                    <p>© 2026 HireGen - Giải pháp tuyển dụng hàng đầu</p>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };

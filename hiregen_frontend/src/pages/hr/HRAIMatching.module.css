@@ -1,0 +1,815 @@
+.btnOutline,
+.btnPrimary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-family: 'Manrope', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.18s ease;
+    white-space: nowrap;
+}
+
+.btnOutline {
+    border: 1px solid var(--outline);
+    background: #ffffff;
+    color: var(--text-main);
+}
+
+.btnOutline:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btnPrimary {
+    border: 1px solid var(--primary);
+    background: var(--primary);
+    color: #ffffff;
+    align-self: end;
+    width: 100%;
+    min-width: 210px;
+    flex-shrink: 0;
+}
+
+.btnPrimary:hover {
+    background: #152e55;
+}
+
+.btnPrimary:disabled,
+.btnOutline:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.btnOutline .material-symbols-outlined,
+.btnPrimary .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.controlBar {
+    display: grid;
+    grid-template-columns: minmax(280px, 2fr) minmax(150px, 0.7fr) minmax(260px, 1.2fr) 210px;
+    gap: 14px;
+    align-items: end;
+    margin-bottom: 18px;
+    padding: 18px;
+    background: #ffffff;
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+}
+
+.controlBar,
+.controlBar * {
+    box-sizing: border-box;
+}
+
+.fieldGroup,
+.fieldGroupSmall {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+}
+
+.fieldGroup label,
+.fieldGroupSmall label {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.fieldGroup select,
+.fieldGroup input,
+.fieldGroupSmall select {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    background: #ffffff;
+    color: var(--text-main);
+    font-family: 'Manrope', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+}
+
+.fieldGroup select:focus,
+.fieldGroup input:focus,
+.fieldGroupSmall select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(30, 64, 118, 0.08);
+}
+
+.jobSummary {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) repeat(4, minmax(120px, 160px));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.jobCard,
+.statCard,
+.resultsCard,
+.insightPanel {
+    background: #ffffff;
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+}
+
+.jobCard {
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    min-width: 0;
+    align-items: center;
+}
+
+.kicker {
+    display: inline-flex;
+    margin-bottom: 8px;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.jobCard h2 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.jobCard p {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.statCard {
+    min-height: 110px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.statValue {
+    color: var(--text-main);
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.statLabel {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 18px;
+    align-items: start;
+}
+
+.resultsCard {
+    overflow: hidden;
+    min-width: 0;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--outline);
+}
+
+.cardHeader h3,
+.insightHeader h3 {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.cardHeader p,
+.insightHeader p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    min-width: 1040px;
+    border-collapse: collapse;
+    font-family: 'Manrope', sans-serif;
+}
+
+.table thead {
+    background: #f8fafc;
+}
+
+.table th {
+    padding: 13px 16px;
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 14px 16px;
+    border-top: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.table tbody tr:hover,
+.activeRow {
+    background: #f8fafc;
+}
+
+.activeRow td:first-child {
+    box-shadow: inset 4px 0 0 var(--primary);
+}
+
+.candidateCell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.candidateCell strong {
+    display: block;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.candidateCell span {
+    display: block;
+    margin-top: 3px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.avatar,
+.avatarImg {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.avatarImg {
+    object-fit: cover;
+    border: 1px solid var(--outline);
+}
+
+.scoreCell {
+    min-width: 132px;
+}
+
+.scoreCell strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.progressTrack {
+    width: 100%;
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.progressFill {
+    height: 100%;
+    border-radius: inherit;
+}
+
+.itssBadge,
+.levelBadge,
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    white-space: nowrap;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.itssBadge {
+    padding: 5px 9px;
+    background: #eff6ff;
+    color: var(--primary);
+}
+
+.levelBadge {
+    margin-left: 6px;
+    padding: 5px 8px;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.tagList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-width: 190px;
+}
+
+.goodTag,
+.gapTag {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.goodTag {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.gapTag {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.mutedTag {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.statusBadge {
+    padding: 5px 10px;
+}
+
+.statusPending {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.statusReviewing {
+    background: #eff6ff;
+    color: var(--primary);
+}
+
+.statusInterviewing {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.statusRejected {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.statusHired {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.actions {
+    display: flex;
+    gap: 7px;
+}
+
+.actions button {
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--outline);
+    border-radius: 7px;
+    background: #ffffff;
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.actions button:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.actions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.emptyCell {
+    height: 180px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.emptyCell span {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 28px;
+}
+
+.insightPanel {
+    position: sticky;
+    top: 16px;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    padding: 18px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.insightPanel::-webkit-scrollbar,
+.insightSummary::-webkit-scrollbar,
+.gapList::-webkit-scrollbar,
+.radarRows::-webkit-scrollbar {
+    width: 8px;
+}
+
+.insightPanel::-webkit-scrollbar-track,
+.insightSummary::-webkit-scrollbar-track,
+.gapList::-webkit-scrollbar-track,
+.radarRows::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.insightPanel::-webkit-scrollbar-thumb,
+.insightSummary::-webkit-scrollbar-thumb,
+.gapList::-webkit-scrollbar-thumb,
+.radarRows::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: #cbd5e1;
+    background-clip: padding-box;
+}
+
+.insightPanel::-webkit-scrollbar-button,
+.insightSummary::-webkit-scrollbar-button,
+.gapList::-webkit-scrollbar-button,
+.radarRows::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.insightHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+}
+
+.aiTag {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.scoreRing {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.scoreRing::after {
+    content: '';
+    position: absolute;
+    inset: 9px;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.scoreRing span {
+    position: relative;
+    z-index: 1;
+    color: var(--text-main);
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.insightSummary {
+    margin: 0 0 18px;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    max-height: 156px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    padding: 12px;
+    border: 1px solid #eef2f7;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.emptyText {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.insightBlock {
+    padding: 14px 0;
+    border-top: 1px solid #f1f5f9;
+}
+
+.insightBlock h4,
+.radarBox h4 {
+    margin: 0 0 10px;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.insightBlock ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.insightBlock li {
+    margin-bottom: 7px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.itssInsight {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gapList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    padding-right: 2px;
+}
+
+.gapItem {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid #f1f5f9;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.gapItem strong {
+    display: block;
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.gapItem p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.gapItem span {
+    flex-shrink: 0;
+    color: #c2410c;
+    font-size: 12px;
+    font-weight: 900;
+}
+
+.radarBox {
+    padding: 14px 0;
+    border-top: 1px solid #f1f5f9;
+}
+
+.radarRows {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    padding-right: 2px;
+}
+
+.radarRow {
+    display: grid;
+    grid-template-columns: 76px 1fr 38px;
+    gap: 9px;
+    align-items: center;
+}
+
+.radarRow span,
+.radarRow strong {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.radarRow div {
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.radarRow i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary);
+}
+
+.recommendBox {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 13px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.recommendBox span {
+    color: #d97706;
+}
+
+.recommendBox p {
+    margin: 0;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.45;
+}
+
+.emptyInsight {
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--text-muted);
+    gap: 10px;
+}
+
+.emptyInsight span {
+    font-size: 34px;
+    color: var(--primary);
+}
+
+.emptyInsight p {
+    margin: 0;
+    max-width: 240px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+@media (max-width: 1440px) {
+    .controlBar {
+        grid-template-columns: minmax(0, 1fr) 220px;
+    }
+
+    .controlBar .fieldGroup:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .controlBar .fieldGroupSmall {
+        grid-column: 1 / 2;
+    }
+
+    .controlBar .fieldGroup:nth-child(3) {
+        grid-column: 1 / 2;
+        grid-row: 3 / 4;
+        min-width: 0;
+    }
+
+    .btnPrimary {
+        grid-column: 2 / 3;
+        grid-row: 3 / 4;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .jobSummary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .jobCard {
+        grid-column: 1 / -1;
+        align-items: flex-start;
+    }
+
+    .workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .insightPanel {
+        position: static;
+    }
+}
+
+@media (max-width: 760px) {
+    .controlBar {
+        grid-template-columns: 1fr;
+    }
+
+    .controlBar .fieldGroup:first-child,
+    .controlBar .fieldGroup:nth-child(3),
+    .controlBar .fieldGroupSmall,
+    .btnPrimary {
+        grid-column: auto;
+        grid-row: auto;
+    }
+
+    .btnPrimary {
+        width: 100%;
+    }
+
+    .jobSummary {
+        grid-template-columns: 1fr;
+    }
+
+    .jobCard {
+        flex-direction: column;
+    }
+
+}

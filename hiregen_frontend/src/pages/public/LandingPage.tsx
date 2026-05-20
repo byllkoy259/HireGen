@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, Button, Spin, message } from 'antd';
+import { Button, Select, Spin, message } from 'antd';
 import { SearchOutlined, EnvironmentOutlined } from '@ant-design/icons';
 import axiosClient from '../../services/axiosClient';
-import Logo from '../../components/common/Logo';
+import Header from '../../components/layouts/Header';
+import Footer from '../../components/layouts/Footer';
+import { getValidDashboardPath } from '../../utils/auth';
 
 import styles from './LandingPage.module.css';
 
@@ -32,6 +34,7 @@ interface Job {
 interface Company {
     id: string;
     name: string;
+    website?: string;
     industry?: string;
     logo_url?: string;
     hr_count?: number;
@@ -44,10 +47,19 @@ interface ChartItem {
     color: string;
 }
 
+const LOCATIONS = [
+    'T\u1ea5t c\u1ea3 \u0111\u1ecba \u0111i\u1ec3m',
+    'Nh\u1eadt B\u1ea3n',
+    'H\u00e0 N\u1ed9i',
+    '\u0110\u00e0 N\u1eb5ng',
+    'TP.HCM',
+    'Remote',
+    'Hybrid',
+];
+
 const LandingPage: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState<boolean>(true);
-    const [jobs, setJobs] = useState<Job[]>([]);
     const [searchTitle, setSearchTitle] = useState<string>('');
     const [searchLocation, setSearchLocation] = useState<string>('');
 
@@ -74,6 +86,29 @@ const LandingPage: React.FC = () => {
         return salaryRange;
     };
 
+    const getExternalUrl = (url?: string) => {
+        const trimmedUrl = url?.trim();
+        if (!trimmedUrl) return '';
+
+        return /^https?:\/\//i.test(trimmedUrl) ? trimmedUrl : `https://${trimmedUrl}`;
+    };
+
+    const handleCompanyClick = (company: Company) => {
+        const website = getExternalUrl(company.website);
+
+        if (website) {
+            window.open(website, '_blank', 'noopener,noreferrer');
+            return;
+        }
+
+        navigate(`/jobs?q=${encodeURIComponent(company.name)}`);
+    };
+
+    const navigateAuthAware = (path: string) => {
+        const dashboardPath = getValidDashboardPath();
+        navigate(dashboardPath || path);
+    };
+
     useEffect(() => {
         const fetchMarketData = async () => {
             try {
@@ -86,7 +121,6 @@ const LandingPage: React.FC = () => {
                 const jobsData: Job[] = jobsRes.data;
                 const companiesData: Company[] = companiesRes.data;
 
-                setJobs(jobsData);
 
                 // Tạo Map O(1) để ánh xạ nhanh thông tin đối tác nếu Backend chưa trả về trực tiếp trong JobResponse
                 const compMap: Record<string, Company> = {};
@@ -97,7 +131,7 @@ const LandingPage: React.FC = () => {
                 // 1. Tính toán Thống kê (Stats)
                 const totalJobsCount = jobsData.length;
                 const uniqueCompanies = new Set(jobsData.map(job => job.company_name || job.company_id));
-                
+
                 const now = new Date();
                 const threeDaysAgo = new Date(now.setDate(now.getDate() - 3));
                 const newJobsCount = jobsData.filter(job => new Date(job.created_at) >= threeDaysAgo).length;
@@ -153,13 +187,13 @@ const LandingPage: React.FC = () => {
 
                 const maxCount = sortedCategories.length > 0 ? sortedCategories[0].count : 1;
                 const chartColors = ['#4ADE80', '#60A5FA', '#FBBF24', '#F87171'];
-                
+
                 const finalChartData = sortedCategories.map((item, index) => ({
                     name: item.name,
                     height: `${Math.max(20, Math.round((item.count / maxCount) * 85))}%`,
                     color: chartColors[index % chartColors.length]
                 }));
-                
+
                 setChartData(finalChartData);
 
             } catch (error) {
@@ -174,45 +208,24 @@ const LandingPage: React.FC = () => {
 
     // Hàm xử lý tìm kiếm trỏ người dùng sang trang danh sách việc làm
     const handleSearch = () => {
-        if (!searchTitle && !searchLocation) {
-            message.info('Vui lòng nhập từ khóa hoặc địa điểm tìm kiếm.');
+        const hasKeyword = searchTitle.trim() !== '';
+        const hasLocation = searchLocation !== '' && searchLocation !== LOCATIONS[0];
+
+        if (!hasKeyword && !hasLocation) {
+            message.info('Vui l\u00f2ng nh\u1eadp t\u1eeb kh\u00f3a ho\u1eb7c \u0111\u1ecba \u0111i\u1ec3m t\u00ecm ki\u1ebfm.');
             return;
         }
-        navigate(`/login?redirect=candidate/jobs&q=${encodeURIComponent(searchTitle)}&loc=${encodeURIComponent(searchLocation)}`);
+        const params = new URLSearchParams();
+        if (hasKeyword) params.set('q', searchTitle.trim());
+        if (hasLocation) params.set('loc', searchLocation);
+
+        navigate(`/jobs?${params.toString()}`);
     };
 
     return (
         <div className={styles.landingLayout}>
             {/* Top Navbar */}
-            <nav className={styles.navbar}>
-                <div className={styles.navContainer}>
-                    <div onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-                        <Logo size="sm" variant="dark" />
-                    </div>
-                    
-                    <div className={styles.navLinks}>
-                        <a href="#" className={styles.activeLink}>Trang chủ</a>
-                        <a onClick={() => navigate('/login?redirect=candidate/jobs')} style={{ cursor: 'pointer' }}>Việc làm</a>
-                        <a onClick={() => navigate('/candidate/guide')} style={{ cursor: 'pointer' }}>Cẩm nang IT Nhật</a>
-                    </div>
-                    
-                    <div className={styles.navActions}>
-                        <Button 
-                            className={styles.btnOutline}
-                            onClick={() => navigate('/register')}
-                        >
-                            Đăng ký
-                        </Button>
-                        <Button 
-                            type="primary" 
-                            className={styles.btnPrimary}
-                            onClick={() => navigate('/login')}
-                        >
-                            Đăng nhập
-                        </Button>
-                    </div>
-                </div>
-            </nav>
+            <Header />
 
             {/* Hero Section */}
             <section className={styles.heroSection}>
@@ -245,31 +258,42 @@ const LandingPage: React.FC = () => {
                     <div className={styles.searchBar}>
                         <div className={styles.searchInputWrapper}>
                             <SearchOutlined className={styles.searchIcon} />
-                            <Input
-                                size="large"
-                                placeholder="Vị trí tuyển dụng"
+                            <input
                                 className={styles.searchInput}
-                                variant="borderless"
+                                placeholder={'V\u1ecb tr\u00ed, k\u1ef9 n\u0103ng, c\u00f4ng ty...'}
                                 value={searchTitle}
-                                onChange={(e) => setSearchTitle(e.target.value)}
-                                onPressEnter={handleSearch}
+                                onChange={e => setSearchTitle(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') handleSearch();
+                                    if (e.key === 'Escape') setSearchTitle('');
+                                }}
                             />
+                            {searchTitle && (
+                                <button
+                                    type="button"
+                                    className={styles.searchClear}
+                                    onClick={() => setSearchTitle('')}
+                                >
+                                    {'\u2715'}
+                                </button>
+                            )}
                         </div>
                         <div className={styles.searchDivider}></div>
                         <div className={styles.searchInputWrapper}>
                             <EnvironmentOutlined className={styles.searchIcon} />
-                            <Input
-                                size="large"
-                                placeholder="Địa điểm"
-                                className={styles.searchInput}
+                            <Select
                                 variant="borderless"
-                                value={searchLocation}
-                                onChange={(e) => setSearchLocation(e.target.value)}
-                                onPressEnter={handleSearch}
+                                className={styles.locationSelect}
+                                value={searchLocation || undefined}
+                                onChange={value => setSearchLocation(value)}
+                                style={{ flex: 1, minWidth: 160 }}
+                                popupMatchSelectWidth={false}
+                                placeholder={'\u0110\u1ecba \u0111i\u1ec3m'}
+                                options={LOCATIONS.map(item => ({ label: item, value: item }))}
                             />
                         </div>
                         <Button type="primary" size="large" className={styles.btnSearch} onClick={handleSearch}>
-                            Tìm kiếm
+                            {'T\u00ecm ki\u1ebfm'}
                         </Button>
                     </div>
 
@@ -300,7 +324,7 @@ const LandingPage: React.FC = () => {
                         <span className={styles.subtitle}>Cơ hội mới nhất</span>
                         <h2 className={styles.title}>Việc làm tiêu biểu</h2>
                     </div>
-                    <a onClick={() => navigate('/login?redirect=candidate/jobs')} className={styles.viewAll} style={{ cursor: 'pointer' }}>
+                    <a onClick={() => navigate('/jobs')} className={styles.viewAll} style={{ cursor: 'pointer' }}>
                         Xem tất cả việc làm →
                     </a>
                 </div>
@@ -308,20 +332,20 @@ const LandingPage: React.FC = () => {
                 <Spin spinning={loading}>
                     <div className={styles.jobGrid}>
                         {featuredJobs.length > 0 ? featuredJobs.map((job) => (
-                            <div 
-                                key={job.id} 
-                                className={styles.jobCard} 
-                                onClick={() => navigate(`/login?redirect=candidate/jobs`)}
+                            <div
+                                key={job.id}
+                                className={styles.jobCard}
+                                onClick={() => navigate(`/jobs?jobId=${encodeURIComponent(job.id)}`)}
                             >
                                 <div className={styles.jobCardContent}>
                                     <div className={styles.jobCardHeader}>
                                         {/* Hiển thị Logo động hoặc Fallback Initials */}
                                         <div className={styles.jobLogoContainer}>
                                             {job.company_logo_url ? (
-                                                <img 
-                                                    src={job.company_logo_url} 
-                                                    alt={job.company_name || 'Logo'} 
-                                                    className={styles.compLogoImg} 
+                                                <img
+                                                    src={job.company_logo_url}
+                                                    alt={job.company_name || 'Logo'}
+                                                    className={styles.compLogoImg}
                                                 />
                                             ) : (
                                                 <div className={styles.compLogoFallback}>
@@ -329,16 +353,6 @@ const LandingPage: React.FC = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <span 
-                                            className="material-symbols-outlined" 
-                                            style={{ color: '#747781', cursor: 'pointer' }}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                navigate('/login');
-                                            }}
-                                        >
-                                            favorite
-                                        </span>
                                     </div>
                                     <h3>{job.title}</h3>
                                     <p className={styles.companyName}>
@@ -355,7 +369,7 @@ const LandingPage: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
-                                
+
                                 {/* Phần Footer chứa Lương và Thời gian được Flexbox neo chặt dưới cùng */}
                                 <div className={styles.jobFooter}>
                                     <span className={styles.salary}>{getDisplaySalary(job.salary_range)}</span>
@@ -378,7 +392,7 @@ const LandingPage: React.FC = () => {
                     <Spin spinning={loading}>
                         <div className={styles.companyGrid}>
                             {topCompanies.length > 0 ? topCompanies.map((company) => (
-                                <div key={company.id} className={styles.companyCard} onClick={() => navigate('/login')}>
+                                <div key={company.id} className={styles.companyCard} onClick={() => handleCompanyClick(company)}>
                                     <div className={styles.companyLogoContainer}>
                                         {company.logo_url ? (
                                             <img src={company.logo_url} alt={company.name} className={styles.compLogoImg} />
@@ -457,50 +471,22 @@ const LandingPage: React.FC = () => {
                             <h2>Upload CV - Tìm việc làm ngay</h2>
                             <p>Hàng trăm cơ hội việc làm IT tại Nhật Bản đang chờ đón bạn.</p>
                         </div>
-                        <button className={styles.ctaBtnLight} onClick={() => navigate('/register')}>Tạo hồ sơ miễn phí</button>
+                        <button className={styles.ctaBtnLight} onClick={() => navigateAuthAware('/register')}>Tạo hồ sơ miễn phí</button>
                     </div>
                     <div className={styles.ctaCardEmployer}>
                         <div>
                             <h2>Đăng tin tuyển dụng</h2>
                             <p>Tiếp cận nguồn nhân lực IT chất lượng cao, am hiểu văn hóa và tiếng Nhật.</p>
                         </div>
-                        <button className={styles.ctaBtnPrimary} onClick={() => navigate('/login?redirect=hr')}>Bắt đầu tuyển dụng</button>
+                        <button className={styles.ctaBtnPrimary} onClick={() => navigateAuthAware('/login?redirect=hr')}>Bắt đầu tuyển dụng</button>
                     </div>
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer className={styles.footer}>
-                <div className={styles.footerContainer}>
-                    <div className={styles.footerBrand}>
-                        <Logo size="sm" variant="dark" />
-                        <p>HireGen là nền tảng tuyển dụng IT hàng đầu dành cho thị trường Nhật Bản, kết nối nhân tài Việt với những cơ hội bứt phá sự nghiệp.</p>
-                    </div>
-                    <div className={styles.footerCol}>
-                        <h4>Ứng viên</h4>
-                        <a onClick={() => navigate('/login?redirect=candidate/jobs')} style={{ cursor: 'pointer' }}>Việc làm mới nhất</a>
-                        <a onClick={() => navigate('/login?redirect=candidate/profile')} style={{ cursor: 'pointer' }}>Tạo hồ sơ</a>
-                        <a onClick={() => navigate('/login?redirect=candidate/guide')} style={{ cursor: 'pointer' }}>Cẩm nang IT Nhật</a>
-                    </div>
-                    <div className={styles.footerCol}>
-                        <h4>Nhà tuyển dụng</h4>
-                        <a onClick={() => navigate('/login?redirect=hr/jobs')} style={{ cursor: 'pointer' }}>Đăng tin tuyển dụng</a>
-                        <a onClick={() => navigate('/login?redirect=hr/candidates')} style={{ cursor: 'pointer' }}>Tìm kiếm nhân tài</a>
-                        <a onClick={() => navigate('/login?redirect=hr/companies')} style={{ cursor: 'pointer' }}>Quản lý đối tác</a>
-                    </div>
-                    <div className={styles.footerCol}>
-                        <h4>Hệ thống</h4>
-                        <a onClick={() => navigate('/about')} style={{ cursor: 'pointer' }}>Về HireGen</a>
-                        <a onClick={() => navigate('/terms')} style={{ cursor: 'pointer' }}>Điều khoản</a>
-                        <a onClick={() => navigate('/candidate/help')} style={{ cursor: 'pointer' }}>Trung tâm hỗ trợ</a>
-                    </div>
-                </div>
-                <div className={styles.footerBottom}>
-                    <p>© 2026 HireGen - Giải pháp tuyển dụng hàng đầu</p>
-                </div>
-            </footer>
+            <Footer />
         </div>
     );
 };
 
 export default LandingPage;
+

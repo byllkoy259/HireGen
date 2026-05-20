@@ -9,59 +9,225 @@
     flex-direction: column;
 }
 
-/* ── Navbar ── */
-.navbar {
-    position: sticky; top: 0; z-index: 50;
-    background-color: #ffffff; border-bottom: 1px solid #E2E8F0; width: 100%;
-}
-.navContainer {
-    display: flex; justify-content: space-between; align-items: center;
-    max-width: 1280px; margin: 0 auto; padding: 16px 32px;
-}
-.navLinks { display: flex; align-items: center; gap: 32px; }
-.navLinks a { font-size: 14px; font-weight: 500; color: #475569; text-decoration: none; transition: color 0.3s; }
-.navLinks a:hover { color: #1e4076; }
-.navActions { display: flex; align-items: center; gap: 16px; }
-.btnOutline { border-color: #1e4076 !important; color: #1e4076 !important; font-weight: 600 !important; }
-.btnPrimary { background-color: #1e4076 !important; border-color: #1e4076 !important; font-weight: 600 !important; }
-
 /* ── Header Khối Pháp lý ── */
 .headerBlock {
-    background-color: #1e4076; padding: 60px 32px; text-align: center; color: #ffffff;
+    background:
+        radial-gradient(circle at top left, rgba(172, 199, 255, 0.18), transparent 34%),
+        linear-gradient(135deg, #1e4076 0%, #17335f 100%);
+    padding: 68px 32px;
+    text-align: center;
+    color: #ffffff;
 }
-.headerInner h1 { font-size: 32px; font-weight: 800; color: #ffffff; margin: 0 0 10px 0; }
-.headerInner p { font-size: 14px; color: #acc7ff; margin: 0; font-weight: 500; }
+
+.headerInner {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.headerBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 14px;
+    margin-bottom: 18px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #dbeafe;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.headerInner h1 {
+    font-size: 34px;
+    font-weight: 800;
+    color: #ffffff;
+    margin: 0 0 12px 0;
+    line-height: 1.35;
+}
+
+.headerInner p {
+    font-size: 14px;
+    color: #acc7ff;
+    margin: 0;
+    font-weight: 500;
+}
 
 /* ── Nội dung chính ── */
-.contentMain { padding: 60px 32px; flex: 1; }
-.paperCard {
-    max-width: 860px; margin: 0 auto; background: #ffffff; border: 1px solid #E2E8F0;
-    border-radius: 16px; padding: 48px; box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+.contentMain {
+    padding: 64px 32px;
+    flex: 1;
 }
 
-.termSection { margin-bottom: 40px; }
-.termSection:last-child { margin-bottom: 0; }
-.termSection h2 { font-size: 20px; font-weight: 700; color: #1e4076; margin: 0 0 16px 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-.termSection p { font-size: 15px; color: #475569; line-height: 1.8; margin: 0 0 16px 0; }
-.termSection p:last-child { margin-bottom: 0; }
+.paperCard {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 52px;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.05);
+}
+
+.metaText {
+    font-size: 15px;
+    color: #64748b;
+    line-height: 1.8;
+    margin: 0 0 40px 0;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.termSection {
+    margin-bottom: 42px;
+}
+
+.termSection:last-child {
+    margin-bottom: 0;
+}
+
+.termSection h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #1e4076;
+    margin: 0 0 18px 0;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 12px;
+    line-height: 1.45;
+}
+
+.termSection h2 span {
+    font-size: 22px;
+    color: #1e4076;
+}
+
+.termSection p {
+    font-size: 15px;
+    color: #475569;
+    line-height: 1.85;
+    margin: 0 0 16px 0;
+}
+
+.termSection p:last-child {
+    margin-bottom: 0;
+}
 
 .highlightCallout {
-    background: #f0fdfa; border-left: 4px solid #0f6e68; padding: 20px; border-radius: 0 8px 8px 0; margin: 16px 0;
+    background: #f0fdfa;
+    border-left: 4px solid #0f6e68;
+    padding: 22px 24px;
+    border-radius: 0 10px 10px 0;
+    margin: 20px 0;
 }
-.highlightCallout p { color: #0f6e68; font-size: 14px; margin-bottom: 12px; }
-.highlightCallout p:last-child { margin-bottom: 0; }
-.highlightCallout p strong { color: #000; }
 
-.bulletList { margin: 0 0 16px 0; padding-left: 20px; }
-.bulletList li { font-size: 15px; color: #475569; line-height: 1.8; margin-bottom: 8px; }
-.bulletList li:last-child { margin-bottom: 0; }
+.highlightCallout p {
+    color: #0f6e68;
+    font-size: 14px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+}
 
-/* ── Footer ── */
-.footer { border-top: 1px solid #E2E8F0; background: #ffffff; }
-.footerBottom { padding: 24px; text-align: center; color: #94a3b8; font-size: 13px; font-weight: 500; }
+.highlightCallout p:last-child {
+    margin-bottom: 0;
+}
 
+.highlightCallout p strong {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.bulletList {
+    margin: 0 0 16px 0;
+    padding-left: 22px;
+}
+
+.bulletList li {
+    font-size: 15px;
+    color: #475569;
+    line-height: 1.85;
+    margin-bottom: 10px;
+}
+
+.bulletList li:last-child {
+    margin-bottom: 0;
+}
+
+.bulletList li strong {
+    color: #1e4076;
+    font-weight: 800;
+}
+
+.finalNote {
+    margin-top: 48px;
+    padding: 24px 26px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.finalNote p {
+    margin: 0;
+    color: #334155;
+    font-size: 15px;
+    line-height: 1.8;
+    font-weight: 600;
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
-    .paperCard { padding: 32px 20px; }
-    .headerBlock { padding: 40px 20px; }
-    .headerInner h1 { font-size: 24px; }
+    .headerBlock {
+        padding: 48px 20px;
+    }
+
+    .headerInner h1 {
+        font-size: 26px;
+    }
+
+    .contentMain {
+        padding: 40px 20px;
+    }
+
+    .paperCard {
+        padding: 32px 22px;
+        border-radius: 14px;
+    }
+
+    .termSection h2 {
+        align-items: flex-start;
+        font-size: 18px;
+    }
+
+    .termSection h2 span {
+        font-size: 21px;
+        margin-top: 2px;
+    }
+
+    .termSection p,
+    .bulletList li,
+    .metaText,
+    .finalNote p {
+        font-size: 14px;
+    }
+
+    .highlightCallout {
+        padding: 18px 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .headerInner h1 {
+        font-size: 23px;
+    }
+
+    .paperCard {
+        padding: 28px 18px;
+    }
+
+    .contentMain {
+        padding: 32px 16px;
+    }
 }

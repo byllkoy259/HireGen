@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, App, Divider } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../services/axiosClient';
 import Logo from '../../components/common/Logo';
+import { getValidDashboardPath } from '../../utils/auth';
 
 import styles from './Register.module.css';
 
@@ -11,6 +12,11 @@ const Register: React.FC = () => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
     const { message } = App.useApp(); // ✅ Dùng hook thay vì import static
+
+    useEffect(() => {
+        const dashboardPath = getValidDashboardPath();
+        if (dashboardPath) navigate(dashboardPath, { replace: true });
+    }, [navigate]);
 
     const onFinish = async (values: any) => {
         setLoading(true);

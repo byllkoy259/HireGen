@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import styles from './CandidateJobs.module.css';
 import CandidateLayout from '../../layouts/candidate/CandidateLayout';
 import axiosClient from '../../services/axiosClient';
+import {
+    ALL_ITSS_CATEGORIES_LABEL,
+    ITSS_CATEGORIES,
+    ITSS_LEVEL_FILTERS,
+    matchesItssLevelFilter,
+} from '../../constants/itss';
 
 /* ─── Types ──────────────────────────────────────────────────── */
 interface Job {
@@ -14,6 +20,7 @@ interface Job {
     logo_url?: string;
     location: string;
     tags: string[];
+    itssCategory: string;
     itssLevel: string;
     salary: string;
     postedAt: string;
@@ -22,6 +29,7 @@ interface Job {
     requirementsText: string;
     benefitsText: string;
     companyInfo: string;
+    companyWebsite?: string;
     deadline?: string;
 }
 
@@ -32,14 +40,9 @@ interface UserCV {
     size: string;
 }
 
-const FILTER_CHIPS = ['Tất cả', 'ITSS L1', 'ITSS L2', 'ITSS L3', 'ITSS L4', 'ITSS L5-7'];
 const LOCATIONS    = ['Tất cả địa điểm', 'Nhật Bản', 'Hà Nội', 'Đà Nẵng', 'TP.HCM', 'Remote', 'Hybrid'];
 
 /* ─── Helpers ────────────────────────────────────────────────── */
-const getCompanyInitials = (name?: string) => {
-    if (!name) return 'IT';
-    return name.substring(0, 2).toUpperCase();
-};
 
 const formatSalary = (min?: number, max?: number, rangeStr?: string) => {
     if (rangeStr) return rangeStr;
@@ -63,6 +66,13 @@ const getTimeAgo = (dateString?: string) => {
 };
 
 /* Phân rã văn bản thành các gạch đầu dòng chi tiết */
+const getExternalUrl = (url?: string) => {
+    const trimmedUrl = url?.trim();
+    if (!trimmedUrl) return '';
+
+    return /^https?:\/\//i.test(trimmedUrl) ? trimmedUrl : `https://${trimmedUrl}`;
+};
+
 const formatDescLines = (desc?: string): string[] => {
     if (!desc) return ['Chưa có thông tin cập nhật.'];
     return desc
@@ -84,7 +94,8 @@ const CandidateJobs: React.FC = () => {
     
     const [search, setSearch] = useState('');
     const [location, setLocation] = useState('Tất cả địa điểm');
-    const [activeFilter, setActiveFilter] = useState('Tất cả');
+    const [activeFilter, setActiveFilter] = useState(ITSS_LEVEL_FILTERS[0]);
+    const [activeCategory, setActiveCategory] = useState(ALL_ITSS_CATEGORIES_LABEL);
     
     /* State Loading & Modal */
     const [loading, setLoading] = useState(true);
@@ -107,7 +118,7 @@ const CandidateJobs: React.FC = () => {
             setLoading(true);
             try {
                 // 1. Quét danh sách toàn bộ công ty đối tác trước để lấy thông tin mapping O(1)
-                let compMap: Record<string, { name: string; desc: string; logo_url?: string}> = {};
+                let compMap: Record<string, { name: string; desc: string; logo_url?: string; website?: string}> = {};
                 try {
                     // Cần mở 1 endpoint GET /api/companies/public ở Backend nếu chưa có, hoặc fallback
                     const compRes = await axiosClient.get('/api/companies/public');
@@ -116,7 +127,8 @@ const CandidateJobs: React.FC = () => {
                         compMap[c.id] = { 
                             name: c.name, 
                             desc: c.description || 'Doanh nghiệp đối tác tuyển dụng uy tín tại thị trường Nhật Bản.' ,
-                            logo_url: c.logo_url || ''
+                            logo_url: c.logo_url || '',
+                            website: c.website || ''
                         };
                     });
                 } catch (e) {
@@ -161,6 +173,7 @@ const CandidateJobs: React.FC = () => {
                         logo_url:         compLogo,
                         location:         j.location || 'Hà Nội, Việt Nam',
                         tags,
+                        itssCategory:     j.itss_category || 'ITSS',
                         itssLevel:        j.itss_level ? `ITSS L${j.itss_level}` : 'ITSS L3',
                         salary:           formatSalary(j.salary_min, j.salary_max, j.salary_range),
                         postedAt:         getTimeAgo(j.created_at),
@@ -169,6 +182,7 @@ const CandidateJobs: React.FC = () => {
                         requirementsText: j.requirements_text || '',
                         benefitsText:     j.benefits_text     || '',
                         companyInfo:      compDesc,
+                        companyWebsite:   compObj.website || j.company?.website || '',
                         deadline:         deadlineStr
                     };
                 });
@@ -241,12 +255,14 @@ const CandidateJobs: React.FC = () => {
             list = list.filter(j => j.location.toLowerCase().includes(locQuery));
         }
         
-        if (activeFilter !== 'Tất cả') {
-            list = list.filter(j => j.itssLevel === activeFilter);
+        list = list.filter(j => matchesItssLevelFilter(j.itssLevel, activeFilter));
+
+        if (activeCategory !== ALL_ITSS_CATEGORIES_LABEL) {
+            list = list.filter(j => j.itssCategory === activeCategory || j.tags.includes(activeCategory));
         }
         
         return list;
-    }, [jobs, search, location, activeFilter]);
+    }, [jobs, search, location, activeFilter, activeCategory]);
 
     const isSplit = activeJob !== null && filtered.length > 0;
 
@@ -274,7 +290,7 @@ const CandidateJobs: React.FC = () => {
         });
     };
 
-    const handleShare = (job: Job) => {
+    const handleShare = () => {
         if (navigator.clipboard) {
             navigator.clipboard.writeText(window.location.href);
             showToast('Đã sao chép đường dẫn việc làm!', 'info');
@@ -437,15 +453,26 @@ const CandidateJobs: React.FC = () => {
                 <div className={`${styles.leftPanel} ${isSplit ? styles.leftPanelSplit : ''}`}>
                     
                     <div className={styles.filterBar}>
-                        {FILTER_CHIPS.map(f => (
-                            <button
-                                key={f}
-                                className={`${styles.filterChip} ${activeFilter === f ? styles.filterChipActive : ''}`}
-                                onClick={() => setActiveFilter(f)}
-                            >
-                                {f}
-                            </button>
-                        ))}
+                        <div className={styles.filterGroup}>
+                            {ITSS_LEVEL_FILTERS.map(f => (
+                                <button
+                                    key={f}
+                                    className={`${styles.filterChip} ${activeFilter === f ? styles.filterChipActive : ''}`}
+                                    onClick={() => setActiveFilter(f)}
+                                >
+                                    {f}
+                                </button>
+                            ))}
+                        </div>
+                        <select
+                            className={styles.categorySelect}
+                            value={activeCategory}
+                            onChange={e => setActiveCategory(e.target.value)}
+                        >
+                            {[ALL_ITSS_CATEGORIES_LABEL, ...ITSS_CATEGORIES].map(category => (
+                                <option key={category} value={category}>{category}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className={styles.listMeta}>
@@ -483,7 +510,7 @@ const CandidateJobs: React.FC = () => {
                             </div>
                             <p className={styles.emptyTitle}>Không tìm thấy công việc phù hợp</p>
                             <p className={styles.emptyDesc}>Hãy thử điều chỉnh lại từ khóa hoặc bộ lọc ITSS để quét thêm kết quả từ hệ thống.</p>
-                            <button className={styles.btnResetFilter} onClick={() => { setSearch(''); setActiveFilter('Tất cả'); setLocation('Tất cả địa điểm'); }}>
+                            <button className={styles.btnResetFilter} onClick={() => { setSearch(''); setActiveFilter(ITSS_LEVEL_FILTERS[0]); setActiveCategory(ALL_ITSS_CATEGORIES_LABEL); setLocation(LOCATIONS[0]); }}>
                                 Xóa toàn bộ lọc
                             </button>
                         </div>
@@ -510,7 +537,7 @@ const CandidateJobs: React.FC = () => {
                                     )}
                                 </div>
                                 <div className={styles.dhActionGroup}>
-                                    <button className={styles.actionBtnSecondary} onClick={() => handleShare(activeJob)}>
+                                    <button className={styles.actionBtnSecondary} onClick={handleShare}>
                                         Chia sẻ
                                     </button>
                                     <button
@@ -594,6 +621,17 @@ const CandidateJobs: React.FC = () => {
                                 <div className={styles.sectionBlock}>
                                     <h4 className={styles.sectionHeading}>Về doanh nghiệp</h4>
                                     <p className={styles.paragraphText}>{activeJob.companyInfo}</p>
+                                    {activeJob.companyWebsite && (
+                                        <a
+                                            href={getExternalUrl(activeJob.companyWebsite)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={styles.companyWebsiteLink}
+                                        >
+                                            <span className="material-symbols-outlined">language</span>
+                                            Website công ty
+                                        </a>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -712,3 +750,4 @@ const CandidateJobs: React.FC = () => {
 };
 
 export default CandidateJobs;
+

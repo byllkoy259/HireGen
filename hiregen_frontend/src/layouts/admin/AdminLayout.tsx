@@ -70,7 +70,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
     const [userData, setUserData] = useState({ name: 'Đang tải...', email: '', displayInitial: '', avatarUrl: '' });
 
     const todayStr = new Intl.DateTimeFormat('vi-VN', {
@@ -131,19 +131,20 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     return (
         <div className={styles.shell}>
             {/* ── Sidebar ── */}
-            <aside className={`${styles.sidebar} ${isSidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
+            <aside
+                className={`${styles.sidebar} ${isSidebarCollapsed ? styles.sidebarCollapsed : ''}`}
+                onMouseEnter={() => setIsSidebarCollapsed(false)}
+                onMouseLeave={() => setIsSidebarCollapsed(true)}
+                onFocus={() => setIsSidebarCollapsed(false)}
+                onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                        setIsSidebarCollapsed(true);
+                    }
+                }}
+            >
                 <div className={styles.sidebarBrand}>
                     <Logo size="sm" variant="light" />
                 </div>
-
-                <button
-                    className={styles.collapseBtn}
-                    onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                >
-                    <span className="material-symbols-outlined">
-                        {isSidebarCollapsed ? 'chevron_right' : 'chevron_left'}
-                    </span>
-                </button>
 
                 <nav className={styles.sidebarNav}>
                     {navSections.map((section) => (
