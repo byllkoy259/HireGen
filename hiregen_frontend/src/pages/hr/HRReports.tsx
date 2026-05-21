@@ -15,6 +15,7 @@ interface ReportApplication {
     companyId: string;
     companyName: string;
     status: AppStatus;
+    aiStatus: string;
     matchScore: number;
     hasAI: boolean;
     appliedAt: string;
@@ -142,8 +143,9 @@ const HRReports: React.FC = () => {
                 }
 
                 const mappedApps = apps.map((app: any) => {
-                    const score = normalizeScore(app.match_score);
-                    const hasAI = score > 0 || Boolean(app.extracted_data);
+                    const score = normalizeScore(app.final_match_score ?? app.match_score);
+                    const aiStatus = app.ai_status || '';
+                    const hasAI = ['processed', 'partial'].includes(aiStatus) || score > 0 || Boolean(app.extracted_data);
                     const status = (app.status || 'pending') as AppStatus;
 
                     return {
@@ -153,6 +155,7 @@ const HRReports: React.FC = () => {
                         companyId,
                         companyName,
                         status,
+                        aiStatus,
                         matchScore: score,
                         hasAI,
                         appliedAt: app.applied_at || new Date().toISOString(),

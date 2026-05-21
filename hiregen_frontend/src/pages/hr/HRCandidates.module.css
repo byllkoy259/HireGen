@@ -19,6 +19,7 @@
     transition: 0.2s;
 }
 .btnOutline:hover { border-color: var(--primary); color: var(--primary); }
+.btnOutline:disabled { cursor: wait; opacity: 0.65; }
 .btnOutline .material-symbols-outlined { font-size: 18px; }
 
 /* ── Summary chips ────────────────────────────────────────────── */

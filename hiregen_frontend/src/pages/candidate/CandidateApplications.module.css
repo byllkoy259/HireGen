@@ -108,6 +108,32 @@
     background: var(--primary-hover);
 }
 
+.btnRefreshHeader {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btnRefreshHeader:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.btnRefreshHeader:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
 /* ─── Khung Chính Master-Detail ─── */
 .mainContainer {
     display: flex;

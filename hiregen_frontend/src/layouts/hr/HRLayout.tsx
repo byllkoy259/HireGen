@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './HRLayout.module.css';
 import Logo from '../../components/common/Logo';
 import { Dropdown } from 'antd';
@@ -166,7 +166,9 @@ const HRLayout: React.FC<HRLayoutProps> = ({
                 }}
             >
                 <div className={styles.sidebarBrand}>
-                    <Logo size="sm" variant="light" />
+                    <Link to="/">
+                        <Logo size="sm" variant="light" />
+                    </Link>
                 </div>
 
                 <nav className={styles.sidebarNav}>

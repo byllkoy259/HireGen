@@ -168,6 +168,12 @@ async def get_application_ai_report(
     partner_name = application.job.company.name if application.job and getattr(application.job, "company", None) else "Đối tác chưa cập nhật"
     job_title = application.job.title if application.job else "Vị trí ứng tuyển"
     match_score = float(application.match_score) if application.match_score is not None else 0.0
+    embedding_match_score = float(application.embedding_match_score) if application.embedding_match_score is not None else match_score
+    llm_match_score = float(application.llm_match_score) if application.llm_match_score is not None else None
+    final_match_score = float(application.final_match_score) if application.final_match_score is not None else match_score
+    ai_status = application.ai_status or ("processed" if application.extracted_data or application.match_score is not None else "queued")
+    ai_error = application.ai_error or ""
+    evaluation_result = application.evaluation_result or {}
 
     app_id_str = str(application.id)
     avatar_color = get_avatar_color(app_id_str)
@@ -181,6 +187,8 @@ async def get_application_ai_report(
 
     # 4. KÍCH HOẠT PURE GENERATIVE AI ENGINE HOẶC HYBRID FALLBACK
     ai_report_data = ext_data.get("ai_report", {})
+    report_source = application.report_source or ("gemini" if ai_report_data else "none")
+    is_fallback = False
     
     if ai_report_data:
         # Đơn nộp mới: Tận dụng trọn vẹn 100% tư duy sâu sắc do chính Gemini viết ra
@@ -189,7 +197,10 @@ async def get_application_ai_report(
         radar_data = ai_report_data.get("radar_data", [])
         gaps = ai_report_data.get("gaps", [])
         ai_questions = ai_report_data.get("ai_questions", [])
+        report_source = "gemini"
     else:
+        report_source = "fallback" if ai_status != "failed" else "none"
+        is_fallback = ai_status != "failed"
         # Đơn nộp cũ: Fallback mượt mà về bộ logic động tính toán bằng mã nguồn
         skills_str = ", ".join(skills_list[:6]) if skills_list else "các công nghệ nền tảng"
         exp_count = len(experience_list)
@@ -197,12 +208,12 @@ async def get_application_ai_report(
         
         ai_summary = (
             f"{name_check_alert}\n\n"
-            f"• Đánh giá tổng quan: Ứng viên đạt mức tương quan {match_score}% so với yêu cầu JD. "
+            f"• Đánh giá tổng quan: Ứng viên đạt mức tương quan {final_match_score}% so với yêu cầu JD. "
             f"Hồ sơ phân tích cho thấy ứng viên {exp_str}, bộc lộ thế mạnh cốt lõi về {skills_str}. "
             f"Năng lực chuyên môn hiện tại được trích xuất phù hợp với lộ trình {ai_itss_predicted} ({ai_itss_level}) theo hệ thống tiêu chuẩn kỹ năng ITSS của Nhật Bản."
         )
 
-        tech_score = min(100, max(40, int(match_score + (len(skills_list) * 1.5))))
+        tech_score = min(100, max(40, int(final_match_score + (len(skills_list) * 1.5))))
         exp_score = 90 if exp_count >= 3 else (80 if exp_count == 2 else (70 if exp_count == 1 else 55))
         
         lang_score = 60
@@ -217,7 +228,7 @@ async def get_application_ai_report(
         elif "ielts" in cv_text_dump or "toeic" in cv_text_dump or "english" in skills_dump:
             lang_score = 70
 
-        soft_score = min(100, max(50, int(match_score * 0.85 + 25)))
+        soft_score = min(100, max(50, int(final_match_score * 0.85 + 25)))
         culture_score = min(100, max(50, int(lang_score * 0.8 + 20)))
 
         radar_data = [
@@ -258,6 +269,14 @@ async def get_application_ai_report(
             }
         ]
 
+    if ai_status == "failed" and not ai_report_data:
+        ai_summary = ai_error or "Hệ thống chưa tạo được báo cáo AI cho hồ sơ này."
+        radar_data = []
+        gaps = []
+        ai_questions = []
+        report_source = "none"
+        is_fallback = False
+
     return {
         "application_id": app_id_str,
         "applicant_name": applicant_name,
@@ -268,7 +287,16 @@ async def get_application_ai_report(
         "initials": initials,
         "job_title": job_title,
         "partner_name": partner_name,
-        "match_score": match_score,
+        "match_score": final_match_score,
+        "embedding_match_score": embedding_match_score,
+        "llm_match_score": llm_match_score,
+        "final_match_score": final_match_score,
+        "scoring_method": application.scoring_method or evaluation_result.get("scoring_method") or "embedding_cosine_v1",
+        "evaluation_result": evaluation_result,
+        "ai_status": ai_status,
+        "ai_error": ai_error,
+        "report_source": report_source,
+        "is_fallback": is_fallback,
         "itss_category": itss_category,
         "itss_level": itss_level,
         "status": application.status,

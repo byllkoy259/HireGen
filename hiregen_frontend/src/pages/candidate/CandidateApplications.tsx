@@ -51,6 +51,7 @@ const CandidateApplications: React.FC = () => {
     const navigate = useNavigate();
     const [applications, setApplications] = useState<ApplicationDetail[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshKey, setRefreshKey] = useState(0);
     
     /* State bộ lọc & tìm kiếm */
     const [activeTab, setActiveTab] = useState<'all' | AppStage>('all');
@@ -108,7 +109,7 @@ const CandidateApplications: React.FC = () => {
         };
 
         fetchApplications();
-    }, []);
+    }, [refreshKey]);
 
     /* ── Logic Lọc & Tìm kiếm ────────────────────────────────── */
     const filteredApps = useMemo(() => {
@@ -128,12 +129,20 @@ const CandidateApplications: React.FC = () => {
         <CandidateLayout
             pageTitle="Đơn đã nộp"
             pageSubtitle="Theo dõi toàn bộ lịch sử và tiến trình ứng tuyển của bạn"
-            headerActions={
+            headerActions={<>
+                <button
+                    className={styles.btnRefreshHeader}
+                    onClick={() => setRefreshKey(key => key + 1)}
+                    disabled={loading}
+                >
+                    <span className="material-symbols-outlined">refresh</span>
+                    Làm mới
+                </button>
                 <button className={styles.btnExplorePrimary} onClick={() => navigate('/candidate/jobs')}>
                     <span className="material-symbols-outlined">add_circle</span>
                     Ứng tuyển thêm
                 </button>
-            }
+            </>}
         >
             {/* Thanh Tìm kiếm & Bộ lọc Tabs */}
             <div className={styles.filterTopbar}>

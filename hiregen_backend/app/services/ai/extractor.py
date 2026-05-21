@@ -1,105 +1,120 @@
-import json
 import asyncio
+import json
+
 from app.services.ai.config import client
+
 
 async def extract_cv_to_json(cv_text: str, jd_text: str = "") -> dict:
     """
-    Sử dụng Gemini Flash để đọc CV text, đối chiếu ngữ cảnh trực tiếp với JD (nếu có),
-    trích xuất thông tin định danh và thực hiện tư duy đánh giá AI chuyên sâu.
+    Use Gemini to extract a structured CV profile and a readable CV-JD report.
+    Matching score is calculated later by the standardized evaluation pipeline.
     """
     jd_section = f"\n\nJOB DESCRIPTION (JD):\n{jd_text}" if jd_text.strip() else ""
 
     prompt = f"""
-    Bạn là một chuyên gia tuyển dụng IT cấp cao tại thị trường Nhật Bản (AI Headhunter).
-    Nhiệm vụ của bạn là phân tích sâu file CV của ứng viên, đối chiếu với Job Description (nếu có)
-    để bóc tách thông tin cá nhân và đưa ra đánh giá toàn diện theo chuẩn kỹ năng ITSS.
+    You are a senior IT recruiter for the Japanese market.
+    Analyze the candidate CV and compare it with the JD when provided.
+    Return exactly one valid JSON object. Do not wrap it in markdown. Do not add explanations outside JSON.
+    For ai_report.match_score, return your own numeric 0-100 fit score, not a placeholder.
+    Write ai_report.ai_summary, ai_report.score_reason, ai_report.gaps, ai_report.strengths, ai_report.weaknesses,
+    ai_report.recommendation, and ai_report.ai_questions in Vietnamese.
+    The match score must reflect fit for the target JD, not general IT strength. Penalize clear role or ITSS category
+    mismatch even when the candidate has strong adjacent technical skills.
 
-    Hãy trả về duy nhất một chuỗi JSON hợp lệ theo đúng cấu trúc dưới đây.
-    KHÔNG sử dụng định dạng markdown (như ```json).
-    KHÔNG thêm bất kỳ lời giải thích nào khác.
-
-    Schema đầu ra bắt buộc:
+    Output schema:
     {{
-        "personal_info": {{
-            "full_name": "Họ và tên ứng viên",
-            "email": "Email",
-            "phone": "Số điện thoại"
-        }},
-        "education": [
-            {{
-                "school": "Tên trường",
-                "major": "Chuyên ngành",
-                "degree": "Bằng cấp"
-            }}
-        ],
-        "experience": [
-            {{
-                "company": "Tên công ty / Tổ chức",
-                "position": "Vị trí",
-                "duration": "Thời gian",
-                "description": "Mô tả công việc"
-            }}
-        ],
-        "skills": ["Kỹ năng 1", "Kỹ năng 2", "Kỹ năng 3"],
-        "itss_prediction": {{
-            "category": "Cấp độ ITSS dự đoán (VD: Entry, Junior, Independent, Professional, Lead)",
-            "level": 3
-        }},
-        "ai_report": {{
-            "ai_summary": "Đoạn văn phân tích ngắn gọn (khoảng 4-5 câu) nhận xét sâu về mức độ phù hợp của ứng viên với JD, thế mạnh cốt lõi và tiềm năng phát triển tại môi trường làm việc Nhật Bản.",
-            "radar_data": [
-                {{"label": "Chuyên môn", "candidate": 85, "required": 80}},
-                {{"label": "Kinh nghiệm", "candidate": 80, "required": 75}},
-                {{"label": "Ngoại ngữ", "candidate": 75, "required": 70}},
-                {{"label": "Kỹ năng mềm", "candidate": 80, "required": 75}},
-                {{"label": "Văn hóa Nhật", "candidate": 75, "required": 80}}
-            ],
-            "gaps": [
-                {{
-                    "skill": "Tên kỹ năng thiếu hụt hoặc cần cải thiện",
-                    "required": 4,
-                    "actual": 3,
-                    "note": "Nhận xét chi tiết lý do và định hướng khắc phục"
-                }}
-            ],
-            "ai_questions": [
-                {{
-                    "category": "Kỹ thuật chuyên sâu",
-                    "question": "Câu hỏi phỏng vấn khai thác sâu vào một dự án/kỹ năng cụ thể trong CV",
-                    "intent": "Mục đích đánh giá của câu hỏi"
-                }},
-                {{
-                    "category": "Văn hóa & Quy trình",
-                    "question": "Câu hỏi tình huống ứng xử, quy tắc Horenso hoặc làm việc nhóm",
-                    "intent": "Mục đích đánh giá"
-                }},
-                {{
-                    "category": "Định hướng phát triển",
-                    "question": "Câu hỏi về mục tiêu nghề nghiệp theo thang đo ITSS",
-                    "intent": "Mục đích đánh giá"
-                }}
-            ]
+      "personal_info": {{
+        "full_name": "Candidate full name",
+        "email": "Email",
+        "phone": "Phone number"
+      }},
+      "education": [
+        {{
+          "school": "School name",
+          "major": "Major",
+          "degree": "Degree"
         }}
+      ],
+      "experience": [
+        {{
+          "company": "Company / organization",
+          "position": "Position",
+          "duration": "Duration",
+          "description": "Work description"
+        }}
+      ],
+      "hard_skills": ["Python", "FastAPI", "PostgreSQL"],
+      "soft_skills": ["Teamwork", "Communication"],
+      "languages": [
+        {{
+          "language": "Japanese",
+          "level": "N4"
+        }}
+      ],
+      "skills": ["Backward-compatible combined skills list"],
+      "itss_prediction": {{
+        "category": "Business Application Development",
+        "level": 2,
+        "level_label": "Junior",
+        "reason": "Short reason for this ITSS prediction"
+      }},
+      "ai_report": {{
+        "ai_summary": "4-5 câu tiếng Việt nhận xét mức độ phù hợp với JD, thế mạnh, điểm lệch vai trò, rủi ro và tiềm năng tại môi trường Nhật.",
+        "match_score": 0,
+        "score_reason": "Giải thích ngắn bằng tiếng Việt cho điểm 0-100. Cân nhắc role fit, must-have, seniority, ngôn ngữ, ITSS category/level và gap có thể đào tạo hay không.",
+        "radar_data": [
+          {{"label": "Chuyên môn", "candidate": 80, "required": 80}},
+          {{"label": "Kinh nghiệm", "candidate": 70, "required": 75}},
+          {{"label": "Ngoại ngữ", "candidate": 60, "required": 70}},
+          {{"label": "Kỹ năng mềm", "candidate": 75, "required": 75}},
+          {{"label": "Văn hóa Nhật", "candidate": 65, "required": 80}}
+        ],
+        "gaps": [
+          {{
+            "skill": "AWS",
+            "required": 4,
+            "actual": 2,
+            "note": "Giải thích bằng tiếng Việt vì sao gap này quan trọng và HR nên xác minh thế nào"
+          }}
+        ],
+        "strengths": ["Thế mạnh cụ thể từ CV bằng tiếng Việt"],
+        "weaknesses": ["Điểm yếu hoặc điểm chưa chắc chắn bằng tiếng Việt"],
+        "recommendation": "Khuyến nghị bằng tiếng Việt",
+        "ai_questions": [
+          {{
+            "category": "Kỹ thuật chuyên sâu",
+            "question": "Câu hỏi phỏng vấn bằng tiếng Việt dựa trên CV và JD",
+            "intent": "Mục đích đánh giá bằng tiếng Việt"
+          }}
+        ]
+      }}
     }}
 
-    NỘI DUNG CV:
-    {cv_text}{jd_section}
-    """
-    
+CV CONTENT:
+{cv_text}{jd_section}
+"""
+
     try:
         response = await asyncio.to_thread(
             client.models.generate_content,
             model="gemini-2.5-flash",
-            contents=prompt
+            contents=prompt,
         )
-        
+
         raw_text = response.text.strip()
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:-3].strip()
         elif raw_text.startswith("```"):
             raw_text = raw_text[3:-3].strip()
-            
-        return json.loads(raw_text)
-    except Exception as e:
-        print(f"[Extractor Error] Lỗi khi trích xuất và phân tích CV bằng Gemini: {e}")
+
+        data = json.loads(raw_text)
+        if "skills" not in data:
+            combined_skills = []
+            for key in ("hard_skills", "soft_skills"):
+                if isinstance(data.get(key), list):
+                    combined_skills.extend(data[key])
+            data["skills"] = list(dict.fromkeys(str(skill).strip() for skill in combined_skills if str(skill).strip()))
+        return data
+    except Exception as exc:
+        print(f"[Extractor Error] Gemini extraction failed: {exc}")
         return {}

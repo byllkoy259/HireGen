@@ -82,9 +82,11 @@ const CandidateSavedJobs: React.FC = () => {
     
     /* State Loading & Modal */
     const [loading, setLoading] = useState(true);
+    const [refreshKey, setRefreshKey] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [modalJob, setModalJob] = useState<Job | null>(null);
     const [selectedCvId, setSelectedCvId] = useState('');
+    const [coverLetter, setCoverLetter] = useState('');
     const [submitting, setSubmitting] = useState(false);
     
     const [toast, setToast] = useState<{ msg: string; type: 'info' | 'success' | 'error' } | null>(null);
@@ -222,7 +224,7 @@ const CandidateSavedJobs: React.FC = () => {
         };
 
         loadSavedJobsData();
-    }, []);
+    }, [refreshKey]);
 
     /* ── Tìm kiếm nội bộ ───────────────────────────────────── */
     const filteredJobs = useMemo(() => {
@@ -262,6 +264,7 @@ const CandidateSavedJobs: React.FC = () => {
     const openApplyModal = (job: Job) => {
         if (appliedIds.has(job.id)) return;
         setModalJob(job);
+        setCoverLetter('');
         setShowModal(true);
     };
 
@@ -277,11 +280,13 @@ const CandidateSavedJobs: React.FC = () => {
             await axiosClient.post(`/api/candidate/applications`, { 
                 job_id:           modalJob.id, 
                 resume_id:        selectedCvId,
-                application_type: 'applied'
+                application_type: 'applied',
+                cover_letter:     coverLetter.trim() || null,
             });
             
             setAppliedIds(prev => new Set([...prev, modalJob.id]));
             setShowModal(false);
+            setCoverLetter('');
             showToast('Ứng tuyển thành công! Hồ sơ đã được chuyển đến nhà tuyển dụng.', 'success');
         } catch (err: any) {
             let safeMsg = 'Hồ sơ chưa gửi được hoặc bạn đã ứng tuyển vị trí này.';
@@ -348,12 +353,20 @@ const CandidateSavedJobs: React.FC = () => {
         <CandidateLayout 
             pageTitle="Việc đã lưu" 
             pageSubtitle="Quản lý và theo dõi các cơ hội nghề nghiệp bạn đang quan tâm"
-            headerActions={
+            headerActions={<>
+                <button
+                    className={styles.refreshBtn}
+                    onClick={() => setRefreshKey(key => key + 1)}
+                    disabled={loading}
+                >
+                    <span className="material-symbols-outlined">refresh</span>
+                    Làm mới
+                </button>
                 <button className={styles.btnExplorePrimary} onClick={() => navigate('/candidate/jobs')}>
                     <span className="material-symbols-outlined" style={{ fontSize: 18 }}>search</span>
                     Tìm thêm việc làm
                 </button>
-            }
+            </>}
         >
 
             {/* Thanh Tìm kiếm nội bộ */}
@@ -594,6 +607,8 @@ const CandidateSavedJobs: React.FC = () => {
                                 <textarea
                                     className={styles.textareaInput}
                                     rows={4}
+                                    value={coverLetter}
+                                    onChange={e => setCoverLetter(e.target.value)}
                                     placeholder="Viết một vài câu giới thiệu điểm mạnh của bạn phù hợp với văn hóa công ty Nhật Bản..."
                                 />
                             </div>

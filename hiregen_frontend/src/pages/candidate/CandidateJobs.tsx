@@ -23,7 +23,9 @@ interface Job {
     itssCategory: string;
     itssLevel: string;
     salary: string;
+    salarySortValue: number;
     postedAt: string;
+    createdAt: number;
     badge?: 'hot' | 'new';
     descriptionText: string;
     requirementsText: string;
@@ -40,6 +42,8 @@ interface UserCV {
     size: string;
 }
 
+type SortOrder = 'newest' | 'salary_high';
+
 const LOCATIONS    = ['Tất cả địa điểm', 'Nhật Bản', 'Hà Nội', 'Đà Nẵng', 'TP.HCM', 'Remote', 'Hybrid'];
 
 /* ─── Helpers ────────────────────────────────────────────────── */
@@ -50,6 +54,18 @@ const formatSalary = (min?: number, max?: number, rangeStr?: string) => {
     if (min && !max) return `Từ $${min}`;
     if (!min && max) return `Đến $${max}`;
     return `$${min} - $${max}`;
+};
+
+const getSalarySortValue = (min?: number, max?: number, rangeStr?: string) => {
+    if (typeof max === 'number' && max > 0) return max;
+    if (typeof min === 'number' && min > 0) return min;
+
+    const values = String(rangeStr || '')
+        .match(/\d[\d.,]*/g)
+        ?.map(value => Number(value.replace(/[.,]/g, '')))
+        .filter(value => Number.isFinite(value)) || [];
+
+    return values.length > 0 ? Math.max(...values) : 0;
 };
 
 const getTimeAgo = (dateString?: string) => {
@@ -96,12 +112,15 @@ const CandidateJobs: React.FC = () => {
     const [location, setLocation] = useState('Tất cả địa điểm');
     const [activeFilter, setActiveFilter] = useState(ITSS_LEVEL_FILTERS[0]);
     const [activeCategory, setActiveCategory] = useState(ALL_ITSS_CATEGORIES_LABEL);
+    const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
     
     /* State Loading & Modal */
     const [loading, setLoading] = useState(true);
+    const [refreshKey, setRefreshKey] = useState(0);
     const [showModal, setShowModal] = useState(false);
     const [modalJob, setModalJob] = useState<Job | null>(null);
     const [selectedCvId, setSelectedCvId] = useState('');
+    const [coverLetter, setCoverLetter] = useState('');
     const [submitting, setSubmitting] = useState(false);
     
     const [toast, setToast] = useState<{ msg: string; type: 'info' | 'success' | 'error' } | null>(null);
@@ -176,7 +195,9 @@ const CandidateJobs: React.FC = () => {
                         itssCategory:     j.itss_category || 'ITSS',
                         itssLevel:        j.itss_level ? `ITSS L${j.itss_level}` : 'ITSS L3',
                         salary:           formatSalary(j.salary_min, j.salary_max, j.salary_range),
+                        salarySortValue:  getSalarySortValue(j.salary_min, j.salary_max, j.salary_range),
                         postedAt:         getTimeAgo(j.created_at),
+                        createdAt:         j.created_at ? new Date(j.created_at).getTime() : 0,
                         badge,
                         descriptionText:  j.description_text  || '',
                         requirementsText: j.requirements_text || '',
@@ -235,7 +256,7 @@ const CandidateJobs: React.FC = () => {
         };
 
         loadJobDashboardData();
-    }, []);
+    }, [refreshKey]);
 
     /* ── Bộ lọc & Logic tìm kiếm ───────────────────────────── */
     const filtered = useMemo(() => {
@@ -260,9 +281,17 @@ const CandidateJobs: React.FC = () => {
         if (activeCategory !== ALL_ITSS_CATEGORIES_LABEL) {
             list = list.filter(j => j.itssCategory === activeCategory || j.tags.includes(activeCategory));
         }
+
+        list.sort((a, b) => {
+            if (sortOrder === 'salary_high') {
+                return b.salarySortValue - a.salarySortValue || b.createdAt - a.createdAt;
+            }
+
+            return b.createdAt - a.createdAt;
+        });
         
         return list;
-    }, [jobs, search, location, activeFilter, activeCategory]);
+    }, [jobs, search, location, activeFilter, activeCategory, sortOrder]);
 
     const isSplit = activeJob !== null && filtered.length > 0;
 
@@ -300,6 +329,7 @@ const CandidateJobs: React.FC = () => {
     const openApplyModal = (job: Job) => {
         if (appliedIds.has(job.id)) return;
         setModalJob(job);
+        setCoverLetter('');
         setShowModal(true);
     };
 
@@ -316,11 +346,13 @@ const CandidateJobs: React.FC = () => {
             await axiosClient.post(`/api/candidate/applications`, { 
                 job_id:           modalJob.id, 
                 resume_id:        selectedCvId,
-                application_type: 'applied'
+                application_type: 'applied',
+                cover_letter:     coverLetter.trim() || null,
             });
             
             setAppliedIds(prev => new Set([...prev, modalJob.id]));
             setShowModal(false);
+            setCoverLetter('');
             showToast('Ứng tuyển thành công! Hồ sơ đã được chuyển đến nhà tuyển dụng.', 'success');
         } catch (err: any) {
             let safeMsg = 'Hồ sơ chưa gửi được hoặc bạn đã ứng tuyển vị trí này.';
@@ -420,7 +452,16 @@ const CandidateJobs: React.FC = () => {
         <CandidateLayout 
             pageTitle="Tìm việc làm" 
             pageSubtitle="Khám phá cơ hội nghề nghiệp chuẩn ITSS Nhật Bản"
-            headerActions={<></>}
+            headerActions={
+                <button
+                    className={styles.refreshBtn}
+                    onClick={() => setRefreshKey(key => key + 1)}
+                    disabled={loading}
+                >
+                    <span className="material-symbols-outlined">refresh</span>
+                    Làm mới
+                </button>
+            }
         >
 
             {/* Thanh Search & Filter chính */}
@@ -479,9 +520,13 @@ const CandidateJobs: React.FC = () => {
                         <span className={styles.metaTxt}>
                             {loading ? 'Đang quét hệ thống...' : `Tìm thấy ${filtered.length} việc làm phù hợp`}
                         </span>
-                        <select className={styles.sortSelect}>
-                            <option>Mới nhất</option>
-                            <option>Lương cao nhất</option>
+                        <select
+                            className={styles.sortSelect}
+                            value={sortOrder}
+                            onChange={e => setSortOrder(e.target.value as SortOrder)}
+                        >
+                            <option value="newest">Mới nhất</option>
+                            <option value="salary_high">Lương cao nhất</option>
                         </select>
                     </div>
 
@@ -722,6 +767,8 @@ const CandidateJobs: React.FC = () => {
                                 <textarea
                                     className={styles.textareaInput}
                                     rows={4}
+                                    value={coverLetter}
+                                    onChange={e => setCoverLetter(e.target.value)}
                                     placeholder="Viết một vài câu giới thiệu điểm mạnh của bạn phù hợp với văn hóa công ty Nhật Bản..."
                                 />
                             </div>

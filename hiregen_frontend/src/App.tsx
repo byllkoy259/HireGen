@@ -53,6 +53,7 @@ function App() {
             <Route path="/guide" element={<Guide />} />
             <Route path="/help" element={<HelpCenter />} />
             <Route path="/jobs" element={<PublicJobs />} />
+            <Route path="/profile/:id" element={<PublicProfileView />} />
 
             <Route element={<ProtectedRoute allowedRoles={['HR']} />}>
               <Route path="/hr" element={<HRDashboard />} />

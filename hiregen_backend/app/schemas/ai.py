@@ -1,7 +1,10 @@
+from typing import Optional
+
 from pydantic import BaseModel
 
 class CVExtractRequest(BaseModel):
     cv_text: str
+    jd_text: Optional[str] = None
 
 class AIMatchRequest(BaseModel):
     cv_text: str

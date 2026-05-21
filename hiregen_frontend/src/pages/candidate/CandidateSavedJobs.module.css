@@ -89,6 +89,32 @@
     background: var(--primary-hover);
 }
 
+.refreshBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.refreshBtn:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+}
+
+.refreshBtn:disabled {
+    cursor: wait;
+    opacity: 0.65;
+}
+
 /* ─── Khung Layout 2 Trạng thái Split ─── */
 .bodyLayout {
     display: flex;

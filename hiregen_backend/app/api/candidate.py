@@ -3,10 +3,11 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy import delete
 from sqlalchemy.orm import joinedload
 
 from app.core.database import get_db
-from app.models.models import User, JobDescription, Resume, Application, Candidate
+from app.models.models import User, JobDescription, Resume, Application, Candidate, ResumeSkill
 from app.schemas.candidate import (
     ResumeCreate, ResumeResponse, ApplicationCreate, ApplicationResponse, 
     CandidateProfileUpdate, CandidateProfileResponse, CandidateApplicationListResponse
@@ -131,6 +132,8 @@ async def delete_resume(
     if not resume:
         raise HTTPException(status_code=404, detail="Không tìm thấy CV hoặc bạn không có quyền xóa.")
     
+    await db.execute(delete(Application).where(Application.resume_id == resume.id))
+    await db.execute(delete(ResumeSkill).where(ResumeSkill.resume_id == resume.id))
     await db.delete(resume)
     await db.commit()
     return None
@@ -172,7 +175,10 @@ async def apply_job(
         job_id=application_in.job_id,
         resume_id=application_in.resume_id,
         application_type=application_in.application_type,
-        status="pending"
+        cover_letter=application_in.cover_letter.strip() if application_in.cover_letter else None,
+        status="pending",
+        ai_status="queued",
+        report_source="none",
     )
     
     db.add(new_application)

@@ -141,12 +141,12 @@ const HRDashboard: React.FC = () => {
                         allApps = [...allApps, ...apps];
 
                         // ĐÃ SỬA: So sánh trực tiếp với thang điểm 80
-                        const aiMatched    = apps.filter((a: any) => (parseFloat(a.match_score) || 0) >= 80).length;
+                        const aiMatched    = apps.filter((a: any) => (parseFloat(a.final_match_score ?? a.match_score) || 0) >= 80).length;
                         const interviewing = apps.filter((a: any) => a.status === 'interviewing').length;
                         const offerOrHired = apps.filter((a: any) => ['offer-sent', 'hired'].includes(a.status)).length;
 
                         apps.forEach((a: any) => {
-                            const score = parseFloat(a.match_score) || 0;
+                            const score = parseFloat(a.final_match_score ?? a.match_score) || 0;
                             dynamicActivities.push({
                                 type: score >= 80 ? 'ai' : 'apply',
                                 text: `${a.applicant_name || 'Một ứng viên'} đã nộp CV vào vị trí ${job.title}`,
@@ -187,7 +187,7 @@ const HRDashboard: React.FC = () => {
                 }
 
                 const totalApps  = allApps.length;
-                const totalScore = allApps.reduce((sum: number, a: any) => sum + (parseFloat(a.match_score) || 0), 0);
+                const totalScore = allApps.reduce((sum: number, a: any) => sum + (parseFloat(a.final_match_score ?? a.match_score) || 0), 0);
                 // ĐÃ SỬA: Gỡ bỏ phép nhân 100 thừa thớt để trả về đúng % thực tế
                 const avgScore   = totalApps > 0 ? Math.round(totalScore / totalApps) : 0;
 

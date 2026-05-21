@@ -164,8 +164,8 @@ class Resume(Base):
 
     # Quan hệ
     candidate: Mapped["Candidate"] = relationship(back_populates="resumes")
-    applications: Mapped[list["Application"]] = relationship(back_populates="resume")
-    skills: Mapped[list["ResumeSkill"]] = relationship(back_populates="resume")
+    applications: Mapped[list["Application"]] = relationship(back_populates="resume", passive_deletes=True)
+    skills: Mapped[list["ResumeSkill"]] = relationship(back_populates="resume", passive_deletes=True)
 
 class Application(Base):
     __tablename__ = "applications"
@@ -177,13 +177,23 @@ class Application(Base):
     
     # Phân biệt luồng: Ứng viên tự apply hay HR chủ động invite
     application_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    cover_letter: Mapped[str] = mapped_column(Text, nullable=True)
     
     # Điểm do thuật toán AI (Cosine Similarity) tính toán
     match_score: Mapped[float] = mapped_column(Numeric(5, 2), nullable=True)
+    embedding_match_score: Mapped[float] = mapped_column(Numeric(5, 2), nullable=True)
+    llm_match_score: Mapped[float] = mapped_column(Numeric(5, 2), nullable=True)
+    final_match_score: Mapped[float] = mapped_column(Numeric(5, 2), nullable=True)
+    scoring_method: Mapped[str] = mapped_column(String(100), nullable=True)
     
     reviewed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     status: Mapped[str] = mapped_column(String(50), default="pending")
+    ai_status: Mapped[str] = mapped_column(String(50), default="queued")
+    ai_error: Mapped[str] = mapped_column(Text, nullable=True)
+    ai_processed_at: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    report_source: Mapped[str] = mapped_column(String(50), default="none")
     extracted_data: Mapped[dict] = mapped_column(JSONB, nullable=True)
+    evaluation_result: Mapped[dict] = mapped_column(JSONB, nullable=True)
     applied_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Quan hệ

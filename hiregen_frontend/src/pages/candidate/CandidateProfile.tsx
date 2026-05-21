@@ -4,10 +4,10 @@ import styles from './CandidateProfile.module.css';
 import axiosClient from '../../services/axiosClient';
 
 /* ─── Types ──────────────────────────────────────────────────── */
-interface ExpItem { id: string; title: string; org: string; period: string; desc: string; }
+interface ExpItem { id: string; title: string; org: string; period: string; desc: string; technologies?: string; }
 interface CertItem { id: string; name: string; org: string; date: string; }
 interface EduItem { id: string; degree: string; school: string; period: string; desc: string; }
-interface ProjectItem { id: string; name: string; role: string; period: string; desc: string; url: string; }
+interface ProjectItem { id: string; name: string; role: string; period: string; desc: string; url: string; technologies?: string; }
 interface ResumeFile {
     id: string; cv_url: string; filename: string; uploaded_at: string;
     size_label: string; is_primary: boolean; status: string;
@@ -36,6 +36,31 @@ interface ProfileForm {
 
 const uid = () => Math.random().toString(36).slice(2, 9);
 const getInitials = (name: string) => name.trim().split(' ').slice(-2).map(w => w[0]).join('').toUpperCase() || 'CA';
+const normalizeSkillText = (value?: string | string[]) => {
+    if (Array.isArray(value)) return value.filter(Boolean).join(', ');
+    return value || '';
+};
+const splitTechText = (value?: string) => (value || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean);
+
+const EXPERIENCE_FIELDS = [
+    { key: 'title', label: 'Chức danh' },
+    { key: 'org', label: 'Công ty' },
+    { key: 'period', label: 'Khoảng thời gian' },
+    { key: 'technologies', label: 'Kỹ năng sử dụng' },
+    { key: 'desc', label: 'Mô tả', multiline: true },
+];
+
+const PROJECT_FIELDS = [
+    { key: 'name', label: 'Tên dự án' },
+    { key: 'role', label: 'Vai trò' },
+    { key: 'period', label: 'Khoảng thời gian' },
+    { key: 'url', label: 'Link', type: 'url' },
+    { key: 'technologies', label: 'Kỹ năng sử dụng' },
+    { key: 'desc', label: 'Mô tả', multiline: true },
+];
 
 /* ─── Skill Input ────────────────────────────────────────────── */
 const SkillInput: React.FC<{
@@ -205,7 +230,8 @@ const CandidateProfile: React.FC = () => {
                         id: x.id || uid(),
                         title: x.position || '',         // position -> title
                         org: x.company_name || '',       // company_name -> org
-                        period: x.end_date || '',        // end_date -> period
+                        period: x.period || x.duration || x.end_date || '',
+                        technologies: normalizeSkillText(x.technologies || x.skills),
                         desc: x.description || ''        // description -> desc
                     })),
                     education: (p.education || []).map((x: any) => ({ 
@@ -225,7 +251,8 @@ const CandidateProfile: React.FC = () => {
                         id: x.id || uid(),
                         name: x.project_name || '',      // project_name -> name
                         role: x.role || '',
-                        period: x.period || '', 
+                        period: x.period || x.duration || x.end_date || '', 
+                        technologies: normalizeSkillText(x.technologies || x.skills),
                         desc: x.description || '',       // description -> desc
                         url: x.url || ''
                     })),
@@ -321,6 +348,7 @@ const CandidateProfile: React.FC = () => {
                     position: exp.title,
                     start_date: null, // Backend yêu cầu start_date/end_date là string
                     end_date: exp.period,
+                    technologies: exp.technologies || null,
                     description: exp.desc
                 })),
 
@@ -337,7 +365,11 @@ const CandidateProfile: React.FC = () => {
                 projects: form.projects.map(proj => ({
                     project_name: proj.name,
                     role: proj.role,
-                    technologies: null, // Có thể bổ sung nếu form có trường này
+                    start_date: null,
+                    end_date: proj.period || null,
+                    period: proj.period || null,
+                    technologies: proj.technologies || null,
+                    url: proj.url || null,
                     description: proj.desc
                 })),
 
@@ -612,16 +644,23 @@ const CandidateProfile: React.FC = () => {
                         <div className={styles.formBody}>
                             {form.work_experience.map(exp => (
                                 <EditableCard key={exp.id} 
-                                    onEdit={() => setModal(<ItemModal title="Chỉnh sửa kinh nghiệm" fields={[{ key: 'title', label: 'Chức danh' }, { key: 'org', label: 'Công ty' }, { key: 'period', label: 'Khoảng thời gian' }, { key: 'desc', label: 'Mô tả', multiline: true }]} initial={exp} onSave={d => { setField('work_experience', form.work_experience.map(x => x.id === exp.id ? { ...exp, ...d } : x)); }} onClose={() => setModal(null)} />)}
+                                    onEdit={() => setModal(<ItemModal title="Chỉnh sửa kinh nghiệm" fields={EXPERIENCE_FIELDS} initial={exp} onSave={d => { setField('work_experience', form.work_experience.map(x => x.id === exp.id ? { ...exp, ...d } : x)); }} onClose={() => setModal(null)} />)}
                                     onDelete={() => setField('work_experience', form.work_experience.filter(x => x.id !== exp.id))}
                                 >
                                     <div className={styles.expTitle}>{exp.title}</div>
                                     <div className={styles.expOrg}>{exp.org}</div>
                                     <div className={styles.expPeriod}>{exp.period}</div>
+                                    {splitTechText(exp.technologies).length > 0 && (
+                                        <div className={styles.expTechList}>
+                                            {splitTechText(exp.technologies).map(skill => (
+                                                <span key={skill} className={styles.expTechChip}>{skill}</span>
+                                            ))}
+                                        </div>
+                                    )}
                                     <div className={styles.expDesc}>{exp.desc}</div>
                                 </EditableCard>
                             ))}
-                            <button className={styles.addBtn} onClick={() => setModal(<ItemModal title="Thêm kinh nghiệm" fields={[{ key: 'title', label: 'Chức danh' }, { key: 'org', label: 'Công ty' }, { key: 'period', label: 'Khoảng thời gian' }, { key: 'desc', label: 'Mô tả', multiline: true }]} initial={{}} onSave={d => { setField('work_experience', [...form.work_experience, { id: uid(), ...d } as ExpItem]); }} onClose={() => setModal(null)} />)}>
+                            <button className={styles.addBtn} onClick={() => setModal(<ItemModal title="Thêm kinh nghiệm" fields={EXPERIENCE_FIELDS} initial={{}} onSave={d => { setField('work_experience', [...form.work_experience, { id: uid(), ...d } as ExpItem]); }} onClose={() => setModal(null)} />)}>
                                 <span className="material-symbols-outlined">add</span> Thêm kinh nghiệm làm việc
                             </button>
                         </div>
@@ -652,11 +691,18 @@ const CandidateProfile: React.FC = () => {
                             {/* Dự án */}
                             <label className={`${styles.label} ${styles.sectionLabel}`}>Dự án tiêu biểu</label>
                             {form.projects.map(proj => (
-                                <EditableCard key={proj.id} onEdit={() => setModal(<ItemModal title="Sửa dự án" fields={[{ key: 'name', label: 'Tên dự án' }, { key: 'role', label: 'Vai trò' }, { key: 'period', label: 'Khoảng thời gian' }, { key: 'url', label: 'Link', type: 'url' }, { key: 'desc', label: 'Mô tả', multiline: true }]} initial={proj} onSave={d => setField('projects', form.projects.map(x => x.id === proj.id ? { ...proj, ...d } : x))} onClose={() => setModal(null)} />)} onDelete={() => setField('projects', form.projects.filter(x => x.id !== proj.id))}>
+                                <EditableCard key={proj.id} onEdit={() => setModal(<ItemModal title="Sửa dự án" fields={PROJECT_FIELDS} initial={proj} onSave={d => setField('projects', form.projects.map(x => x.id === proj.id ? { ...proj, ...d } : x))} onClose={() => setModal(null)} />)} onDelete={() => setField('projects', form.projects.filter(x => x.id !== proj.id))}>
                                     <div className={styles.expTitle}>{proj.name}</div><div className={styles.expOrg}>{proj.role}</div><div className={styles.expPeriod}>{proj.period}</div>
+                                    {splitTechText(proj.technologies).length > 0 && (
+                                        <div className={styles.expTechList}>
+                                            {splitTechText(proj.technologies).map(skill => (
+                                                <span key={skill} className={styles.expTechChip}>{skill}</span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </EditableCard>
                             ))}
-                            <button className={styles.addBtn} onClick={() => setModal(<ItemModal title="Thêm dự án" fields={[{ key: 'name', label: 'Tên dự án' }, { key: 'role', label: 'Vai trò' }, { key: 'period', label: 'Khoảng thời gian' }, { key: 'url', label: 'Link', type: 'url' }, { key: 'desc', label: 'Mô tả', multiline: true }]} initial={{}} onSave={d => setField('projects', [...form.projects, { id: uid(), ...d } as ProjectItem])} onClose={() => setModal(null)} />)}><span className="material-symbols-outlined">add</span> Thêm dự án</button>
+                            <button className={styles.addBtn} onClick={() => setModal(<ItemModal title="Thêm dự án" fields={PROJECT_FIELDS} initial={{}} onSave={d => setField('projects', [...form.projects, { id: uid(), ...d } as ProjectItem])} onClose={() => setModal(null)} />)}><span className="material-symbols-outlined">add</span> Thêm dự án</button>
 
                             <div className={styles.innerDivider} />
 

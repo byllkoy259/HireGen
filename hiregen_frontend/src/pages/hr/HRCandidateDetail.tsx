@@ -33,7 +33,7 @@ const NAV_SECTIONS: NavSection[] = [
 
 /* ─── Types ──────────────────────────────────────────────────── */
 // ĐÃ SỬA: Bổ sung thêm 'processed' và 'withdrawn' vào type
-type AppStatus = 'pending' | 'processed' | 'reviewing' | 'interviewing' | 'rejected' | 'hired' | 'withdrawn';
+type AppStatus = 'pending' | 'processed' | 'reviewing' | 'interviewing' | 'rejected' | 'hired' | 'accepted' | 'withdrawn';
 
 interface GapItem {
     skill: string;
@@ -55,7 +55,7 @@ interface AIQuestion {
 }
 
 interface CandidateDetail {
-    application_id: number;
+    application_id: string;
     applicant_name: string;
     applicant_email: string;
     birth_year: number;
@@ -88,6 +88,7 @@ const STATUS_META: Record<AppStatus, { label: string; cls: string }> = {
     interviewing: { label: 'Hẹn phỏng vấn',  cls: 'sInterviewing' },
     rejected:     { label: 'Từ chối',        cls: 'sRejected' },
     hired:        { label: 'Đã tuyển',       cls: 'sHired' },
+    accepted:     { label: 'Đã chấp nhận',   cls: 'sHired' },
     withdrawn:    { label: 'Đã rút hồ sơ',   cls: 'sRejected' },
 };
 
@@ -188,8 +189,8 @@ const HRCandidateDetail: React.FC = () => {
         if (!candidate) return;
         setActionLoading('invite');
         try {
-            await axiosClient.patch(`/api/hr/applications/${candidate.application_id}/status`, { status: 'interviewing' });
-            navigate(`/hr/candidates/${candidate.application_id}/schedule`);
+            await axiosClient.put(`/api/hr/applications/${candidate.application_id}/status`, { status: 'interviewing' });
+            setCandidate({ ...candidate, status: 'interviewing' });
         } catch {
             alert('Không thể mời phỏng vấn. Vui lòng thử lại.');
         } finally {
@@ -201,7 +202,7 @@ const HRCandidateDetail: React.FC = () => {
         if (!candidate || !window.confirm(`Từ chối ứng viên ${candidate.applicant_name}?`)) return;
         setActionLoading('reject');
         try {
-            await axiosClient.patch(`/api/hr/applications/${candidate.application_id}/status`, { status: 'rejected' });
+            await axiosClient.put(`/api/hr/applications/${candidate.application_id}/status`, { status: 'rejected' });
             navigate('/hr/candidates');
         } catch {
             alert('Không thể từ chối. Vui lòng thử lại.');

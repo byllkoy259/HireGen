@@ -94,6 +94,7 @@ const JobCardEl: React.FC<JobCardElProps> = ({ job, onEdit, onToggleStatus }) =>
     const matchColor   = MATCH_COLOR(job.avgMatchScore);
     const isExpiring   = job.daysLeft > 0 && job.daysLeft <= 7;
     const isClosed     = job.status === 'closed';
+    const isDraft      = job.status === 'draft';
 
     return (
         <div className={`${styles.jobCard} ${isClosed ? styles.jobCardClosed : ''}`}>
@@ -106,9 +107,12 @@ const JobCardEl: React.FC<JobCardElProps> = ({ job, onEdit, onToggleStatus }) =>
                         {job.companyInitial}
                     </div>
                 )}
-                <div className={styles.matchBadge} style={{ borderColor: matchColor, color: matchColor }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: 13 }}>bolt</span>
-                    {job.avgMatchScore}%
+                <div className={styles.cardBadges}>
+                    {isDraft && <span className={styles.draftTag}>Nháp</span>}
+                    <div className={styles.matchBadge} style={{ borderColor: matchColor, color: matchColor }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 13 }}>bolt</span>
+                        {job.avgMatchScore}%
+                    </div>
                 </div>
             </div>
 
@@ -155,10 +159,12 @@ const JobCardEl: React.FC<JobCardElProps> = ({ job, onEdit, onToggleStatus }) =>
             <div className={styles.cardFooter}>
                 {isClosed ? (
                     <span className={styles.closedTag}>Đã đóng</span>
+                ) : isDraft ? (
+                    <span />
                 ) : (
                     <span className={`${styles.expiry} ${isExpiring ? styles.expiryUrgent : ''}`}>
                         <span className="material-symbols-outlined">schedule</span>
-                        {isExpiring ? `⚠ ${job.daysLeft} ngày` : `${job.daysLeft} ngày còn lại`}
+                        {isExpiring ? `${job.daysLeft} ngày` : `${job.daysLeft} ngày còn lại`}
                     </span>
                 )}
                 <a href="/hr/candidates" className={styles.viewLink}>Xem ứng viên</a>
@@ -249,9 +255,9 @@ const HRJobs: React.FC = () => {
                         const appsRes = await axiosClient.get(`/api/hr/applications/job/${j.id}`);
                         const apps    = appsRes.data || [];
                         totalApplicants = apps.length;
-                        aiFiltered      = apps.filter((a: any) => (parseFloat(a.match_score) || 0) >= 80).length;
+                        aiFiltered      = apps.filter((a: any) => (parseFloat(a.final_match_score ?? a.match_score) || 0) >= 80).length;
                         interviews      = apps.filter((a: any) => a.status === 'interviewing').length;
-                        totalScore      = apps.reduce((sum: number, a: any) => sum + (parseFloat(a.match_score) || 0), 0);
+                        totalScore      = apps.reduce((sum: number, a: any) => sum + (parseFloat(a.final_match_score ?? a.match_score) || 0), 0);
                     } catch {}
 
                     const companyName: string = compMap[j.company_id] || j.company_name || 'Company';

@@ -16,13 +16,19 @@ class ExperienceItem(BaseModel):
     position: str
     start_date: Optional[str] = None
     end_date: Optional[str] = None
+    technologies: Optional[str] = None
     description: Optional[str] = None
 
 class ProjectItem(BaseModel):
     project_name: str
     role: str
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    period: Optional[str] = None
     technologies: Optional[str] = None
+    url: Optional[str] = None
     description: Optional[str] = None
+    model_config = ConfigDict(extra="allow")
 
 class CertificationItem(BaseModel):
     name: str
@@ -57,11 +63,13 @@ class ApplicationBase(BaseModel):
 
 class ApplicationCreate(ApplicationBase):
     application_type: str = Field("applied", pattern="^(applied|invited)$")
+    cover_letter: Optional[str] = Field(None, max_length=3000)
 
 class ApplicationResponse(ApplicationBase):
     id: uuid.UUID
     candidate_id: uuid.UUID
     application_type: str
+    cover_letter: Optional[str] = None
     status: str
     
     match_score: Optional[float] = None 
@@ -85,6 +93,7 @@ class CandidateApplicationListResponse(BaseModel):
     job_id: uuid.UUID
     resume_id: uuid.UUID
     application_type: str
+    cover_letter: Optional[str] = None
     status: str
     applied_at: datetime
     job: JobShortInfo

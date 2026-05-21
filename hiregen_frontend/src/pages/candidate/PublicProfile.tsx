@@ -58,6 +58,23 @@ const PublicProfile: React.FC = () => {
         return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
     };
 
+    const getPeriodText = (item: any) => {
+        if (item?.period) return item.period;
+        if (item?.duration) return item.duration;
+        if (item?.start_date && item?.end_date) return `${item.start_date} - ${item.end_date}`;
+        return item?.end_date || item?.start_date || '';
+    };
+
+    const normalizeSkillText = (value?: string | string[]) => {
+        if (Array.isArray(value)) return value.filter(Boolean).join(', ');
+        return value || '';
+    };
+
+    const splitTechText = (value?: string | string[]) => normalizeSkillText(value)
+        .split(',')
+        .map(item => item.trim())
+        .filter(Boolean);
+
     return (
         <div className={styles.page}>
             {/* Thanh công cụ (Sẽ bị ẩn khi in ra PDF) */}
@@ -128,12 +145,17 @@ const PublicProfile: React.FC = () => {
                                 <div className={styles.row}>
                                     {/* Dùng company_name và end_date */}
                                     <strong>{exp.company_name}</strong>
-                                    <span>{exp.end_date}</span>
+                                    <span>{getPeriodText(exp)}</span>
                                 </div>
                                 <div className={styles.row}>
                                     {/* Dùng position */}
                                     <i>{exp.position}</i>
                                 </div>
+                                {splitTechText(exp.technologies || exp.skills).length > 0 && (
+                                    <div className={styles.techLine}>
+                                        <strong>Technologies:</strong> {splitTechText(exp.technologies || exp.skills).join(', ')}
+                                    </div>
+                                )}
                                 {exp.description && (
                                     <ul className={styles.bulletList}>
                                         {formatDesc(exp.description)}
@@ -153,11 +175,16 @@ const PublicProfile: React.FC = () => {
                                 <div className={styles.row}>
                                     {/* Dùng project_name */}
                                     <strong>{proj.project_name}</strong>
-                                    <span>{proj.period}</span> {/* Có thể trống vì DB không có */}
+                                    <span>{getPeriodText(proj)}</span>
                                 </div>
                                 <div className={styles.row}>
                                     <i>{proj.role}</i>
                                 </div>
+                                {splitTechText(proj.technologies || proj.skills).length > 0 && (
+                                    <div className={styles.techLine}>
+                                        <strong>Technologies:</strong> {splitTechText(proj.technologies || proj.skills).join(', ')}
+                                    </div>
+                                )}
                                 {proj.description && (
                                     <ul className={styles.bulletList}>
                                         {formatDesc(proj.description)}

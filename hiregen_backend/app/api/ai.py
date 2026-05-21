@@ -27,7 +27,7 @@ async def test_extract_cv(request: CVExtractRequest):
     if not request.cv_text.strip():
         raise HTTPException(status_code=400, detail="Nội dung CV không được để trống")
     
-    data = await extract_cv_to_json(request.cv_text)
+    data = await extract_cv_to_json(request.cv_text, request.jd_text or "")
     
     if not data:
         raise HTTPException(status_code=500, detail="Không thể trích xuất dữ liệu từ Gemini")
@@ -37,7 +37,7 @@ async def test_extract_cv(request: CVExtractRequest):
         "extracted_data": data
     }
 
-@router.post("/test-match", response_model=AIMatchResponse)
+@router.post("/test-embedding-match", response_model=AIMatchResponse)
 async def test_match_cv_jd(request: AIMatchRequest):
     """
     Endpoint thử nghiệm so khớp (Matching) giữa CV và JD.
@@ -53,10 +53,15 @@ async def test_match_cv_jd(request: AIMatchRequest):
         return {
             "status": "success",
             "matching_score": match_score,
-            "algorithm": "Baseline (Sentence-Transformers + Cosine Similarity)"
+            "algorithm": "embedding_cosine_v1 (Sentence-Transformers + Cosine Similarity)"
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi tính toán so khớp: {str(e)}")
+
+
+@router.post("/test-match", response_model=AIMatchResponse)
+async def test_match_cv_jd_legacy(request: AIMatchRequest):
+    return await test_match_cv_jd(request)
 
 
 @router.post("/match/job/{job_id}")
@@ -88,7 +93,9 @@ async def run_ai_matching_for_job(
     missing_resume = 0
 
     for application in applications:
-        has_ai_result = application.match_score is not None and bool(application.extracted_data)
+        has_ai_result = application.ai_status == "processed" or (
+            application.final_match_score is not None and bool(application.extracted_data)
+        )
         if has_ai_result and not force:
             skipped += 1
             continue
@@ -97,8 +104,13 @@ async def run_ai_matching_for_job(
             missing_resume += 1
             continue
 
+        application.ai_status = "queued"
+        application.ai_error = None
+        application.report_source = "none"
         process_candidate_cv_task.delay(str(application.id), application.resume.cv_url)
         queued += 1
+
+    await db.commit()
 
     return {
         "status": "queued" if queued > 0 else "no_pending_applications",

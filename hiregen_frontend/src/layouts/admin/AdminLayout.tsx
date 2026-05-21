@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import styles from './AdminLayout.module.css';
 import Logo from '../../components/common/Logo';
 import { Dropdown } from 'antd';
@@ -143,7 +143,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
                 }}
             >
                 <div className={styles.sidebarBrand}>
-                    <Logo size="sm" variant="light" />
+                    <Link to="/">
+                        <Logo size="sm" variant="light" />
+                    </Link>
                 </div>
 
                 <nav className={styles.sidebarNav}>

@@ -142,6 +142,11 @@
     margin-bottom: 4px;
 }
 
+.techLine {
+    font-size: 10.5pt;
+    margin: 2px 0 4px;
+}
+
 @media print {
     @page {
         margin: 0.5in 0.8in;

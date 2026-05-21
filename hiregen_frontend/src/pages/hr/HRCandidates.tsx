@@ -35,7 +35,7 @@ const NAV_SECTIONS: NavSection[] = [
 ];
 
 /* ─── Types ──────────────────────────────────────────────────── */
-type AppStatus = 'pending' | 'processed' | 'reviewing' | 'interviewing' | 'rejected' | 'hired';
+type AppStatus = 'pending' | 'processed' | 'reviewing' | 'interviewing' | 'rejected' | 'hired' | 'accepted';
 type FilterTab = 'all' | 'ai80' | 'pending' | 'interviewing' | 'rejected';
 type SortKey   = 'match_score' | 'applied_at' | 'applicant_name';
 
@@ -68,6 +68,7 @@ const STATUS_META: Record<AppStatus, { label: string; cls: string }> = {
     interviewing: { label: 'Hẹn phỏng vấn', cls: 'sInterviewing' },
     rejected:     { label: 'Từ chối',       cls: 'sRejected' },
     hired:        { label: 'Đã tuyển',      cls: 'sHired' },
+    accepted:     { label: 'Đã chấp nhận',  cls: 'sHired' },
 };
 
 /* ─── Helpers ────────────────────────────────────────────────── */
@@ -92,9 +93,21 @@ const toInitials = (name: string) => {
 const pct        = (s: number) => Math.round(s);
 const fmtDate    = (iso: string) => { try { return new Date(iso).toLocaleDateString('vi-VN'); } catch { return iso; } };
 const matchColor = (s: number) => s >= 80 ? '#16a34a' : s >= 60 ? '#d97706' : '#dc2626';
-const matchTag   = (s: number) => s >= 80 ? 'EXCELLENT' : s >= 60 ? 'POTENTIAL' : 'LOW';
-const matchCls   = (s: number) => s >= 80 ? styles.tagGreen : s >= 60 ? styles.tagAmber : styles.tagRed;
+const matchTag   = (s: number) => s >= 80 ? 'PHÙ HỢP CAO' : s >= 60 ? 'TIỀM NĂNG' : s >= 35 ? 'THẤP - CHUYỂN HƯỚNG' : 'THẤP';
+const matchCls   = (s: number) => s >= 80 ? styles.tagGreen : s >= 35 ? styles.tagAmber : styles.tagRed;
 const PAGE_SIZE  = 8;
+const safeJson = (value: any) => {
+    if (!value) return {};
+    if (typeof value === 'string') {
+        try { return JSON.parse(value); } catch { return {}; }
+    }
+    return value;
+};
+const formatItssLevel = (level: any) => {
+    if (level === null || level === undefined || level === '') return undefined;
+    const levelText = String(level);
+    return levelText.toLowerCase().startsWith('level') ? levelText : `Level ${levelText}`;
+};
 
 /* ═══════════════════════════════════════════════════════════════
    Component
@@ -108,6 +121,7 @@ const HRCandidates: React.FC = () => {
     const [sortKey,      setSortKey]      = useState<SortKey>('match_score');
     const [sortDir,      setSortDir]      = useState<'asc' | 'desc'>('desc');
     const [page,         setPage]         = useState(1);
+    const [refreshKey,   setRefreshKey]   = useState(0);
     
     // State quản lý Dropdown Fixed
     const [openMenuId,   setOpenMenuId]   = useState<string | null>(null);
@@ -145,8 +159,20 @@ const HRCandidates: React.FC = () => {
                             const userObj = a.user || {};
                             const jobObj = a.job || {};
 
-                            const rawScore = parseFloat(a.match_score) || 0;
+                            const rawScore = parseFloat(a.final_match_score ?? a.match_score) || 0;
                             const matchScore = rawScore <= 1 && rawScore > 0 ? rawScore * 100 : rawScore;
+                            const evaluation = safeJson(a.evaluation_result);
+                            const extracted = safeJson(a.extracted_data);
+                            const itssPrediction = safeJson(extracted.itss_prediction);
+                            const predictedCategory =
+                                itssPrediction.category ||
+                                evaluation.itss_category ||
+                                a.itss_category;
+                            const predictedLevel = formatItssLevel(
+                                itssPrediction.level ??
+                                evaluation.itss_level ??
+                                a.itss_level
+                            );
 
                             // Name
                             const name =
@@ -202,12 +228,12 @@ const HRCandidates: React.FC = () => {
 
                                 itss_category:
                                     matchScore > 0
-                                        ? a.itss_category
+                                        ? predictedCategory
                                         : undefined,
 
                                 itss_level:
                                     matchScore > 0
-                                        ? a.itss_level
+                                        ? predictedLevel
                                         : undefined,
 
                                 status: a.status || 'pending',
@@ -239,7 +265,7 @@ const HRCandidates: React.FC = () => {
             }
         };
         load();
-    }, []);
+    }, [refreshKey]);
 
     /* Xử lý click mở Menu Dropdown (Hiển thị Fixed để không bị che) */
     const handleActionClick = (e: React.MouseEvent<HTMLButtonElement>, appId: string) => {
@@ -340,12 +366,16 @@ const HRCandidates: React.FC = () => {
             navSections={NAV_SECTIONS}
             pageTitle="Danh sách ứng viên"
             pageSubtitle={`${total} ứng viên · ${ai80Count} đạt AI Match ≥ 80% · ${interviewCount} chờ phỏng vấn`}
-            headerActions={
+            headerActions={<>
+                <button className={styles.btnOutline} onClick={() => setRefreshKey(key => key + 1)} disabled={loading}>
+                    <span className="material-symbols-outlined">refresh</span>
+                    Làm mới
+                </button>
                 <button className={styles.btnOutline}>
                     <span className="material-symbols-outlined">download</span>
                     Xuất Excel
                 </button>
-            }
+            </>}
         >
             {/* Summary chips */}
             <div className={styles.summaryStrip}>

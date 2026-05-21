@@ -430,6 +430,7 @@
     border-radius: 7px;
     background: #ffffff;
     color: var(--text-main);
+    font-family: 'Manrope', sans-serif;
     font-size: 12px;
     font-weight: 800;
     cursor: pointer;

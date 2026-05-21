@@ -33,6 +33,7 @@ interface MatchCandidate {
     candidateSkills: string[];
     missingSkills: string[];
     status: AppStatus;
+    aiStatus?: string;
     aiSummary?: string;
     radarData?: RadarPoint[];
 }
@@ -58,6 +59,10 @@ interface ApplicationAIReport {
     ai_summary: string;
     radar_data: RadarPoint[];
     gaps: GapItem[];
+    ai_status?: string;
+    report_source?: string;
+    is_fallback?: boolean;
+    ai_error?: string;
 }
 
 const NAV_SECTIONS: NavSection[] = [
@@ -294,7 +299,7 @@ const HRAIMatching: React.FC = () => {
                     personalInfo.full_name ||
                     app.applicant_name ||
                     'Ứng viên chưa cập nhật';
-                const score = normalizeScore(app.match_score);
+                const score = normalizeScore(app.final_match_score ?? app.match_score);
                 const candidateSkills = getCandidateSkills(app);
                 const missingSkills = getMissingSkillsFromAI(app);
 
@@ -328,6 +333,7 @@ const HRAIMatching: React.FC = () => {
                     candidateSkills,
                     missingSkills,
                     status: app.status || 'pending',
+                    aiStatus: app.ai_status || '',
                     aiSummary: aiReport.ai_summary || extracted.ai_summary || '',
                     radarData: normalizeRadarData(aiReport.radar_data || extracted.radar_data),
                 };
@@ -435,7 +441,9 @@ const HRAIMatching: React.FC = () => {
         };
     }, [selectedCandidate?.applicationId, aiReports, selectedCandidate]);
 
-    const analyzedCount = candidates.filter(candidate => candidate.matchScore > 0).length;
+    const analyzedCount = candidates.filter(candidate =>
+        ['processed', 'partial'].includes(candidate.aiStatus || '') || candidate.matchScore > 0,
+    ).length;
     const avgScore = analyzedCount > 0
         ? Math.round(candidates.reduce((total, candidate) => total + candidate.matchScore, 0) / analyzedCount)
         : 0;
@@ -485,7 +493,7 @@ const HRAIMatching: React.FC = () => {
             headerActions={
                 <button className={styles.btnOutline} onClick={() => loadMatching()} disabled={matching || !selectedJobId}>
                     <span className="material-symbols-outlined">refresh</span>
-                    Làm mới kết quả
+                    Làm mới
                 </button>
             }
         >
@@ -682,7 +690,9 @@ const HRAIMatching: React.FC = () => {
                         <>
                             <div className={styles.insightHeader}>
                                 <div>
-                                    <span className={styles.aiTag}>AI Generated</span>
+                                    <span className={styles.aiTag}>
+                                        {selectedReport?.is_fallback ? 'Fallback Report' : selectedReport?.report_source === 'none' ? 'No AI Report' : 'AI Generated'}
+                                    </span>
                                     <h3>AI Insight</h3>
                                     <p>{selectedCandidate.name}</p>
                                 </div>
