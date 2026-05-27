@@ -211,23 +211,6 @@ async def create_hr_account(
     if result.scalars().first():
         raise HTTPException(status_code=400, detail="Email này đã tồn tại trong hệ thống.")
 
-    hashed_password = get_password_hash(hr_in.password)
-
-    new_user = User(
-        email=hr_in.email,
-        password_hash=hashed_password,
-        role="HR",
-        is_verified=True
-    )
-    db.add(new_user)
-    await db.flush()
-
-    new_hr_profile = HRProfile(
-        user_id=new_user.id,
-        full_name=hr_in.full_name
-    )
-    db.add(new_hr_profile)
-
     valid_uuids = []
     for cid in hr_in.company_ids:
         try:
@@ -239,7 +222,24 @@ async def create_hr_account(
     if valid_uuids:
         companies_res = await db.execute(select(Company).where(Company.id.in_(valid_uuids)))
         companies = list(companies_res.scalars().all())
-        new_user.companies = companies
+
+    hashed_password = get_password_hash(hr_in.password)
+
+    new_user = User(
+        email=hr_in.email,
+        password_hash=hashed_password,
+        role="HR",
+        is_verified=True,
+        companies=companies
+    )
+    db.add(new_user)
+    await db.flush()
+
+    new_hr_profile = HRProfile(
+        user_id=new_user.id,
+        full_name=hr_in.full_name
+    )
+    db.add(new_hr_profile)
 
     await db.commit()
     await db.refresh(new_user)

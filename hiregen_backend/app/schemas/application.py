@@ -32,6 +32,9 @@ class ApplicationDetailResponse(BaseModel):
     ai_status: Optional[str] = None
     ai_error: Optional[str] = None
     ai_processed_at: Optional[datetime] = None
+    last_ai_error: Optional[str] = None
+    last_ai_rerun_at: Optional[datetime] = None
+    last_ai_attempt_status: Optional[str] = None
     report_source: Optional[str] = None
     extracted_data: Optional[dict[str, Any]] = None
     evaluation_result: Optional[dict[str, Any]] = None

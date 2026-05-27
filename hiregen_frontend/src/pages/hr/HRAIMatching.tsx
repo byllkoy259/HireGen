@@ -5,7 +5,7 @@ import type { NavSection } from '../../layouts/hr/HRLayout';
 import axiosClient from '../../services/axiosClient';
 import styles from './HRAIMatching.module.css';
 
-type AppStatus = 'pending' | 'processed' | 'reviewing' | 'interviewing' | 'rejected' | 'hired';
+type AppStatus = 'pending' | 'processed' | 'reviewing' | 'shortlisted' | 'interviewing' | 'rejected' | 'hired' | 'accepted';
 
 interface JobOption {
     id: string;
@@ -63,6 +63,9 @@ interface ApplicationAIReport {
     report_source?: string;
     is_fallback?: boolean;
     ai_error?: string;
+    confidence_score?: number;
+    confidence_level?: 'HIGH' | 'MEDIUM' | 'LOW';
+    confidence_reason?: string;
 }
 
 const NAV_SECTIONS: NavSection[] = [
@@ -94,16 +97,26 @@ const NAV_SECTIONS: NavSection[] = [
 ];
 
 const STATUS_META: Record<AppStatus, { label: string; cls: string }> = {
-    pending: { label: 'Pending', cls: 'statusPending' },
-    processed: { label: 'AI analyzed', cls: 'statusReviewing' },
-    reviewing: { label: 'Reviewing', cls: 'statusReviewing' },
-    interviewing: { label: 'Interviewing', cls: 'statusInterviewing' },
-    rejected: { label: 'Rejected', cls: 'statusRejected' },
-    hired: { label: 'Hired', cls: 'statusHired' },
+    pending: { label: 'Mới nộp', cls: 'statusPending' },
+    processed: { label: 'Đang đánh giá', cls: 'statusReviewing' },
+    reviewing: { label: 'Đang đánh giá', cls: 'statusReviewing' },
+    shortlisted: { label: 'Đạt sơ tuyển', cls: 'statusReviewing' },
+    interviewing: { label: 'Hẹn phỏng vấn', cls: 'statusInterviewing' },
+    rejected: { label: 'Từ chối', cls: 'statusRejected' },
+    hired: { label: 'Đã tuyển', cls: 'statusHired' },
+    accepted: { label: 'Đã tuyển', cls: 'statusHired' },
 };
 
 const ITSS_LEVELS = ['Tất cả level', 'ITSS L1', 'ITSS L2', 'ITSS L3', 'ITSS L4', 'ITSS L5+'];
 const AVATAR_COLORS = ['#1e4076', '#be185d', '#0369a1', '#059669', '#7c3aed', '#b45309', '#db2777', '#0f766e'];
+
+const normalizeStatus = (status?: string): AppStatus => {
+    if (status === 'processed') return 'reviewing';
+    if (status === 'accepted') return 'hired';
+    if (status === 'shortlisted') return 'shortlisted';
+    if (status === 'reviewing' || status === 'interviewing' || status === 'rejected' || status === 'hired') return status;
+    return 'pending';
+};
 
 const toInitials = (name: string) => {
     const words = name.trim().split(/\s+/).filter(Boolean);
@@ -121,6 +134,12 @@ const normalizeScore = (score: unknown) => {
     const value = Number(score) || 0;
     if (value > 0 && value <= 1) return Math.round(value * 100);
     return Math.max(0, Math.min(100, Math.round(value)));
+};
+
+const confidenceLabel: Record<'HIGH' | 'MEDIUM' | 'LOW', string> = {
+    HIGH: 'Độ tin cậy cao',
+    MEDIUM: 'Độ tin cậy trung bình',
+    LOW: 'Độ tin cậy thấp',
 };
 
 const scoreColor = (score: number) => {
@@ -332,7 +351,7 @@ const HRAIMatching: React.FC = () => {
                     ),
                     candidateSkills,
                     missingSkills,
-                    status: app.status || 'pending',
+                    status: normalizeStatus(app.status),
                     aiStatus: app.ai_status || '',
                     aiSummary: aiReport.ai_summary || extracted.ai_summary || '',
                     radarData: normalizeRadarData(aiReport.radar_data || extracted.radar_data),
@@ -463,12 +482,12 @@ const HRAIMatching: React.FC = () => {
         setUpdatingId(applicationId);
         setCandidates(prev => prev.map(candidate =>
             candidate.applicationId === applicationId
-                ? { ...candidate, status: 'reviewing' }
+                ? { ...candidate, status: 'shortlisted' }
                 : candidate,
         ));
 
         try {
-            await axiosClient.put(`/api/hr/applications/${applicationId}/status`, { status: 'reviewing' });
+            await axiosClient.put(`/api/hr/applications/${applicationId}/status`, { status: 'shortlisted' });
         } catch {
             setCandidates(prev => prev.map(candidate =>
                 candidate.applicationId === applicationId
@@ -599,7 +618,7 @@ const HRAIMatching: React.FC = () => {
                                     </tr>
                                 ) : filteredCandidates.map(candidate => {
                                     const active = selectedCandidate?.applicationId === candidate.applicationId;
-                                    const statusMeta = STATUS_META[candidate.status] || STATUS_META.pending;
+                                    const statusMeta = STATUS_META[normalizeStatus(candidate.status)] || STATUS_META.pending;
                                     return (
                                         <tr
                                             key={candidate.applicationId}
@@ -695,6 +714,15 @@ const HRAIMatching: React.FC = () => {
                                     </span>
                                     <h3>AI Insight</h3>
                                     <p>{selectedCandidate.name}</p>
+                                    {selectedReport?.confidence_level && (
+                                        <div className={styles.confidenceLine} title={selectedReport.confidence_reason || confidenceLabel[selectedReport.confidence_level]}>
+                                            <span className="material-symbols-outlined">verified</span>
+                                            <span>{confidenceLabel[selectedReport.confidence_level]}</span>
+                                            {typeof selectedReport.confidence_score === 'number' && (
+                                                <strong>{normalizeScore(selectedReport.confidence_score)}%</strong>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                                 <div
                                     className={styles.scoreRing}

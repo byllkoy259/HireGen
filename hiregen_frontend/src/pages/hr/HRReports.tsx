@@ -5,7 +5,7 @@ import type { NavSection } from '../../layouts/hr/HRLayout';
 import axiosClient from '../../services/axiosClient';
 import styles from './HRReports.module.css';
 
-type AppStatus = 'pending' | 'processed' | 'reviewing' | 'interviewing' | 'hired' | 'rejected';
+type AppStatus = 'pending' | 'reviewing' | 'shortlisted' | 'interviewing' | 'hired' | 'rejected';
 type TimeFilter = '7d' | '30d' | 'month' | 'all';
 
 interface ReportApplication {
@@ -63,12 +63,12 @@ const NAV_SECTIONS: NavSection[] = [
 ];
 
 const STATUS_META: Record<AppStatus, { label: string; color: string }> = {
-    pending: { label: 'Pending', color: '#64748b' },
-    processed: { label: 'AI analyzed', color: '#1e4076' },
-    reviewing: { label: 'Reviewing', color: '#7c3aed' },
-    interviewing: { label: 'Interviewing', color: '#d97706' },
-    hired: { label: 'Hired', color: '#16a34a' },
-    rejected: { label: 'Rejected', color: '#dc2626' },
+    pending: { label: 'Mới nộp', color: '#64748b' },
+    reviewing: { label: 'Đang đánh giá', color: '#7c3aed' },
+    shortlisted: { label: 'Đạt sơ tuyển', color: '#1e4076' },
+    interviewing: { label: 'Hẹn phỏng vấn', color: '#d97706' },
+    hired: { label: 'Đã tuyển', color: '#16a34a' },
+    rejected: { label: 'Từ chối', color: '#dc2626' },
 };
 
 const TIME_OPTIONS: { value: TimeFilter; label: string }[] = [
@@ -77,6 +77,14 @@ const TIME_OPTIONS: { value: TimeFilter; label: string }[] = [
     { value: 'month', label: 'Tháng này' },
     { value: 'all', label: 'Tất cả thời gian' },
 ];
+
+const normalizeStatus = (status?: string): AppStatus => {
+    if (status === 'processed') return 'reviewing';
+    if (status === 'accepted' || status === 'offered') return 'hired';
+    if (status === 'shortlisted') return 'shortlisted';
+    if (status === 'reviewing' || status === 'interviewing' || status === 'rejected' || status === 'hired') return status;
+    return 'pending';
+};
 
 const normalizeScore = (score: unknown) => {
     const value = Number(score) || 0;
@@ -146,7 +154,7 @@ const HRReports: React.FC = () => {
                     const score = normalizeScore(app.final_match_score ?? app.match_score);
                     const aiStatus = app.ai_status || '';
                     const hasAI = ['processed', 'partial'].includes(aiStatus) || score > 0 || Boolean(app.extracted_data);
-                    const status = (app.status || 'pending') as AppStatus;
+                    const status = normalizeStatus(app.status);
 
                     return {
                         id: String(app.id),
@@ -469,8 +477,8 @@ const HRReports: React.FC = () => {
                                             <th>Ứng viên</th>
                                             <th>Đã AI phân tích</th>
                                             <th>Match TB</th>
-                                            <th>Interviewing</th>
-                                            <th>Hired</th>
+                                            <th>Hẹn phỏng vấn</th>
+                                            <th>Đã tuyển</th>
                                             <th>Trạng thái job</th>
                                         </tr>
                                     </thead>

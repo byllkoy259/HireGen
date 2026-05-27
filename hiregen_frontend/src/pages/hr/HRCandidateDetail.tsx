@@ -33,7 +33,7 @@ const NAV_SECTIONS: NavSection[] = [
 
 /* ─── Types ──────────────────────────────────────────────────── */
 // ĐÃ SỬA: Bổ sung thêm 'processed' và 'withdrawn' vào type
-type AppStatus = 'pending' | 'processed' | 'reviewing' | 'interviewing' | 'rejected' | 'hired' | 'accepted' | 'withdrawn';
+type AppStatus = 'pending' | 'processed' | 'reviewing' | 'shortlisted' | 'interviewing' | 'rejected' | 'hired' | 'accepted' | 'withdrawn';
 
 interface GapItem {
     skill: string;
@@ -68,6 +68,13 @@ interface CandidateDetail {
     itss_category: string;
     itss_level: string;
     status: AppStatus;
+    ai_status?: 'pending' | 'queued' | 'processing' | 'processed' | 'partial' | 'failed' | 'retry_failed';
+    ai_error?: string;
+    last_ai_error?: string;
+    last_ai_attempt_status?: string;
+    confidence_score?: number;
+    confidence_level?: 'HIGH' | 'MEDIUM' | 'LOW';
+    confidence_reason?: string;
     applied_at: string;
     has_linkedin: boolean;
     portfolio_url?: string;
@@ -83,17 +90,36 @@ interface CandidateDetail {
 // ĐÃ SỬA: Mapping đầy đủ các trạng thái để giao diện tra cứu an toàn
 const STATUS_META: Record<AppStatus, { label: string; cls: string }> = {
     pending:      { label: 'Mới nộp',        cls: 'sPending' },
-    processed:    { label: 'Đã phân tích AI', cls: 'sReviewing' },
+    processed:    { label: 'Đang đánh giá',  cls: 'sReviewing' },
     reviewing:    { label: 'Đang đánh giá',  cls: 'sReviewing' },
+    shortlisted:  { label: 'Đạt sơ tuyển',   cls: 'sReviewing' },
     interviewing: { label: 'Hẹn phỏng vấn',  cls: 'sInterviewing' },
     rejected:     { label: 'Từ chối',        cls: 'sRejected' },
     hired:        { label: 'Đã tuyển',       cls: 'sHired' },
-    accepted:     { label: 'Đã chấp nhận',   cls: 'sHired' },
+    accepted:     { label: 'Đã tuyển',       cls: 'sHired' },
     withdrawn:    { label: 'Đã rút hồ sơ',   cls: 'sRejected' },
+};
+
+const normalizeStatus = (status?: string): AppStatus => {
+    if (status === 'processed') return 'reviewing';
+    if (status === 'accepted') return 'hired';
+    if (status === 'shortlisted') return 'shortlisted';
+    if (status === 'reviewing' || status === 'interviewing' || status === 'rejected' || status === 'hired' || status === 'withdrawn') return status;
+    return 'pending';
 };
 
 const pct = (s: number) => Math.round(s);
 const matchColor = (s: number) => s >= 80 ? '#16a34a' : s >= 60 ? '#d97706' : '#dc2626';
+const confidenceLabel: Record<'HIGH' | 'MEDIUM' | 'LOW', string> = {
+    HIGH: 'Độ tin cậy cao',
+    MEDIUM: 'Độ tin cậy trung bình',
+    LOW: 'Độ tin cậy thấp',
+};
+const confidenceClass: Record<'HIGH' | 'MEDIUM' | 'LOW', string> = {
+    HIGH: 'confidenceHigh',
+    MEDIUM: 'confidenceMedium',
+    LOW: 'confidenceLow',
+};
 const fmtDateTime = (iso: string) => {
     try {
         const d = new Date(iso);
@@ -167,7 +193,7 @@ const HRCandidateDetail: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [cvExpanded, setCvExpanded] = useState(false);
     const [copied, setCopied] = useState(false);
-    const [actionLoading, setActionLoading] = useState<'invite' | 'reject' | null>(null);
+    const [actionLoading, setActionLoading] = useState<'invite' | 'reject' | 'rerun' | null>(null);
 
     useEffect(() => {
         const fetchDetail = async () => {
@@ -219,6 +245,19 @@ const HRCandidateDetail: React.FC = () => {
         });
     };
 
+    const handleRerunAI = async () => {
+        if (!candidate) return;
+        setActionLoading('rerun');
+        try {
+            await axiosClient.post(`/api/ai/applications/${candidate.application_id}/rerun`);
+            setCandidate({ ...candidate, ai_status: 'queued', last_ai_attempt_status: 'queued', ai_error: '' });
+        } catch {
+            alert('Không thể đưa hồ sơ vào hàng đợi chấm lại AI. Vui lòng thử lại.');
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
     if (loading) {
         return (
             <HRLayout navSections={NAV_SECTIONS} pageTitle="Chi tiết ứng viên">
@@ -245,9 +284,22 @@ const HRCandidateDetail: React.FC = () => {
     }
 
     // ĐÃ SỬA: Lớp bảo vệ Fallback tuyệt đối. Nếu biến candidate.status bị lạ, gán ngay giá trị an toàn
-    const sm = STATUS_META[candidate.status] || { label: candidate.status || 'Đang xử lý', cls: 'sPending' };
+    const visibleStatus = normalizeStatus(candidate.status);
+    const sm = STATUS_META[visibleStatus] || { label: candidate.status || 'Đang xử lý', cls: 'sPending' };
     const mc = matchColor(candidate.match_score);
     const score = pct(candidate.match_score);
+    const confidenceLevel = candidate.confidence_level;
+    const confidenceText = confidenceLevel ? confidenceLabel[confidenceLevel] : '';
+    const confidenceScore = typeof candidate.confidence_score === 'number' ? pct(candidate.confidence_score) : null;
+    const aiNotice = candidate.ai_status === 'partial'
+        ? 'Báo cáo tạm thời: Gemini/LLM chưa hoàn tất, hệ thống đang dùng fallback embedding + rubric.'
+        : candidate.ai_status === 'retry_failed'
+            ? `Lần chạy lại AI gần nhất bị lỗi, hệ thống đang giữ báo cáo Gemini thành công trước đó.${candidate.last_ai_error ? ` Chi tiết: ${candidate.last_ai_error}` : ''}`
+            : candidate.ai_status === 'failed'
+                ? `Chấm AI thất bại.${candidate.ai_error ? ` Chi tiết: ${candidate.ai_error}` : ''}`
+                : candidate.ai_status === 'queued' || candidate.ai_status === 'processing'
+                    ? 'Hồ sơ đang trong hàng đợi hoặc đang được chấm lại bởi AI.'
+                    : '';
 
     return (
         <HRLayout
@@ -256,6 +308,10 @@ const HRCandidateDetail: React.FC = () => {
             pageSubtitle={`${candidate.job_title} · ${candidate.partner_name}`}
             headerActions={
                 <>
+                    <button className={styles.btnShare} onClick={handleRerunAI} disabled={actionLoading === 'rerun'}>
+                        <span className="material-symbols-outlined">refresh</span>
+                        {actionLoading === 'rerun' ? 'Đang đưa vào hàng đợi...' : 'Chạy lại AI'}
+                    </button>
                     <button className={styles.btnShare} onClick={handleShareLink}>
                         <span className="material-symbols-outlined">{copied ? 'check' : 'share'}</span>
                         {copied ? 'Đã sao chép!' : 'Chia sẻ báo cáo'}
@@ -275,6 +331,13 @@ const HRCandidateDetail: React.FC = () => {
                 <span className="material-symbols-outlined" style={{ fontSize: 16, color: '#c4c6d1' }}>chevron_right</span>
                 <span className={styles.breadcrumbCurrent}>{candidate.applicant_name}</span>
             </div>
+
+            {aiNotice && (
+                <div className={`${styles.aiNotice} ${candidate.ai_status === 'failed' ? styles.aiNoticeError : ''}`}>
+                    <span className="material-symbols-outlined">info</span>
+                    <span>{aiNotice}</span>
+                </div>
+            )}
 
             <div className={styles.mainGrid}>
                 <div className={styles.leftCol}>
@@ -362,6 +425,19 @@ const HRCandidateDetail: React.FC = () => {
                                     <div className={styles.itssBadgeLg}>{candidate.ai_itss_predicted}</div>
                                     <div className={styles.itssLevelBadge}>{candidate.ai_itss_level}</div>
                                 </div>
+
+                                {confidenceLevel && (
+                                    <div className={`${styles.confidenceBox} ${styles[confidenceClass[confidenceLevel]]}`} title={candidate.confidence_reason || confidenceText}>
+                                        <div className={styles.confidenceTop}>
+                                            <span className="material-symbols-outlined">verified</span>
+                                            <span>{confidenceText}</span>
+                                            {confidenceScore !== null && <strong>{confidenceScore}%</strong>}
+                                        </div>
+                                        {candidate.confidence_reason && (
+                                            <p>{candidate.confidence_reason}</p>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className={styles.summaryBox}>
                                     <p className={styles.summaryLabel}>

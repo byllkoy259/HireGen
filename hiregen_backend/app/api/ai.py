@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -106,7 +107,9 @@ async def run_ai_matching_for_job(
 
         application.ai_status = "queued"
         application.ai_error = None
-        application.report_source = "none"
+        application.last_ai_error = None
+        application.last_ai_rerun_at = datetime.utcnow()
+        application.last_ai_attempt_status = "queued"
         process_candidate_cv_task.delay(str(application.id), application.resume.cv_url)
         queued += 1
 
@@ -119,4 +122,49 @@ async def run_ai_matching_for_job(
         "skipped": skipped,
         "missing_resume": missing_resume,
         "total_applications": len(applications),
+    }
+
+
+@router.post("/applications/{application_id}/rerun")
+async def rerun_ai_matching_for_application(
+    application_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_hr: User = Depends(get_current_hr),
+):
+    query = (
+        select(Application)
+        .join(JobDescription, Application.job_id == JobDescription.id)
+        .where(
+            Application.id == application_id,
+            JobDescription.hr_id == current_hr.id,
+        )
+        .options(selectinload(Application.resume))
+    )
+    result = await db.execute(query)
+    application = result.scalars().first()
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found or you do not have permission to rerun AI.")
+
+    if application.ai_status in {"queued", "processing"}:
+        return {
+            "status": "already_queued",
+            "application_id": str(application.id),
+            "ai_status": application.ai_status,
+        }
+
+    if not application.resume or not application.resume.cv_url:
+        raise HTTPException(status_code=400, detail="Application has no resume URL to process.")
+
+    application.ai_status = "queued"
+    application.ai_error = None
+    application.last_ai_error = None
+    application.last_ai_rerun_at = datetime.utcnow()
+    application.last_ai_attempt_status = "queued"
+    await db.commit()
+
+    process_candidate_cv_task.delay(str(application.id), application.resume.cv_url)
+
+    return {
+        "status": "queued",
+        "application_id": str(application.id),
     }

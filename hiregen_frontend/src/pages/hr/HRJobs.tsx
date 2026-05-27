@@ -538,18 +538,18 @@ const HRJobs: React.FC = () => {
 
                     {/* Dùng Flexbox thuần thay cho Grid để đảm bảo an toàn tuyệt đối, không đè trường */}
                     <div style={{ display: 'flex', gap: '16px' }}>
-                        <Form.Item style={{ flex: 1 }} label="Mức lương" name="salary_range">
+                        <Form.Item style={{ flex: 1, minWidth: 0 }} label="Mức lương" name="salary_range">
                             <Input placeholder="VD: ¥6M – 9M/năm" />
                         </Form.Item>
 
-                        <Form.Item style={{ flex: 1 }} label="Địa điểm làm việc" name="location">
+                        <Form.Item style={{ flex: 1, minWidth: 0 }} label="Địa điểm làm việc" name="location">
                             <Input placeholder="VD: Hybrid · Tokyo" />
                         </Form.Item>
                     </div>
 
                     <div style={{ display: 'flex', gap: '16px' }}>
                         <Form.Item
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, minWidth: 0 }}
                             label="Nhóm ngành ITSS"
                             name="itss_category"
                             rules={[{ required: true, message: 'Vui lòng chọn nhóm ngành!' }]}
@@ -600,17 +600,19 @@ const HRJobs: React.FC = () => {
                         </Form.Item>
 
                         <Form.Item
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, minWidth: 0 }}
                             label="Cấp độ ITSS (Skill Level)"
                             name="itss_level"
                             rules={[{ required: true, message: 'Vui lòng chọn cấp độ!' }]}
                         >
                             <Select placeholder="Chọn cấp độ ITSS">
-                                <Select.Option value="1">Level 1 (Entry / Trainee)</Select.Option>
-                                <Select.Option value="2">Level 2 (Junior / Cần hướng dẫn)</Select.Option>
-                                <Select.Option value="3">Level 3 (Independent / Độc lập)</Select.Option>
-                                <Select.Option value="4">Level 4 (Professional / Chuyên nghiệp)</Select.Option>
-                                <Select.Option value="5">Level 5 (Lead / Chuyên gia)</Select.Option>
+                                <Select.Option value="1">Level 1 (Entry Level · Nhận thức cơ bản)</Select.Option>
+                                <Select.Option value="2">Level 2 (Basic Practitioner · Thực hành cơ bản)</Select.Option>
+                                <Select.Option value="3">Level 3 (Independent Professional · Làm việc độc lập)</Select.Option>
+                                <Select.Option value="4">Level 4 (Advanced Specialist · Chuyên gia / Leader)</Select.Option>
+                                <Select.Option value="5">Level 5 (Principal / Project Leader · Leader cấp dự án)</Select.Option>
+                                <Select.Option value="6">Level 6 (Industry Expert · Chuyên gia cấp ngành)</Select.Option>
+                                <Select.Option value="7">Level 7 (World-class Innovator · Tầm vóc thế giới)</Select.Option>
                             </Select>
                         </Form.Item>
                     </div>

@@ -1,4 +1,6 @@
 import json
+import re
+import unicodedata
 import uuid
 from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -35,7 +37,149 @@ def get_initials(name: str) -> str:
         return words[0][0].upper()
     return "".join(w[0] for w in words[-2:]).upper()
 
-# API lấy danh sách đơn ứng tuyển theo Job
+
+def normalize_report_text(value: Any) -> str:
+    text = str(value or "").lower()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def get_report_job_family(job: JobDescription | None) -> str:
+    category = normalize_report_text(job.itss_category if job else "")
+    title = normalize_report_text(job.title if job else "")
+    text = f"{category} {title}"
+
+    if "business application development" in text or "application development" in text or "software development" in text:
+        return "BUSINESS_APP_DEV"
+    if "system development" in text or "smart factory" in text or "iot" in text:
+        return "SYSTEM_DEV"
+    if "project management" in text or "project manager" in text:
+        return "PROJECT_MANAGEMENT"
+    if "it strategy" in text or "consultant" in text or "solution architect" in text:
+        return "IT_STRATEGY"
+    if "it service management" in text or "it support" in text or "helpdesk" in text or "service desk" in text:
+        return "IT_SERVICE_MANAGEMENT"
+    if "network" in text or "infrastructure" in text or "cloud" in text or "devops" in text:
+        return "NETWORK_INFRA"
+    return "GENERAL_IT"
+
+
+def get_fallback_radar_labels(job: JobDescription | None) -> list[str]:
+    family = get_report_job_family(job)
+    labels_by_family = {
+        "IT_SERVICE_MANAGEMENT": ["Hỗ trợ người dùng", "Troubleshooting", "Hệ điều hành/Mạng", "Giao tiếp", "Văn hóa Nhật"],
+        "SYSTEM_DEV": ["Lập trình hệ thống", "IoT/Thiết bị", "Backend/API", "CSDL", "Văn hóa Nhật"],
+        "BUSINESS_APP_DEV": ["Web/App", "Backend/API", "CSDL", "Nghiệp vụ/UI", "Làm việc nhóm"],
+        "NETWORK_INFRA": ["Hạ tầng/Mạng", "Cloud/DevOps", "Bảo mật", "Vận hành", "Văn hóa Nhật"],
+        "PROJECT_MANAGEMENT": ["Lập kế hoạch", "Điều phối", "Quản trị rủi ro", "Giao tiếp", "Văn hóa Nhật"],
+        "IT_STRATEGY": ["Tư duy chiến lược", "Phân tích nghiệp vụ", "Kiến trúc giải pháp", "Tư vấn", "Văn hóa Nhật"],
+    }
+    return labels_by_family.get(family, ["Chuyên môn", "Kinh nghiệm", "Ngoại ngữ", "Kỹ năng mềm", "Văn hóa Nhật"])
+
+# Helpers for report compatibility and legacy AI results
+def parse_json_object(value: Any) -> dict:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def clamp_report_score(value: Any) -> float:
+    try:
+        score = float(value)
+    except (TypeError, ValueError):
+        score = 0.0
+    return max(0.0, min(100.0, score))
+
+def format_itss_level(value: Any, default: Any = 3) -> str:
+    raw = str(value if value not in (None, "") else default).strip()
+    if not raw:
+        raw = str(default)
+    if raw.lower().startswith("level"):
+        return raw
+    match = re.search(r"\d+", raw)
+    if match:
+        return f"Level {match.group()}"
+    return f"Level {raw}"
+
+
+def build_confidence_fallback(
+    *,
+    evaluation_result: dict,
+    embedding_score: float | None,
+    llm_score: float | None,
+    final_score: float,
+    ai_status: str,
+    report_source: str,
+) -> dict:
+    if evaluation_result.get("confidence_level"):
+        return {
+            "confidence_score": evaluation_result.get("confidence_score"),
+            "confidence_level": evaluation_result.get("confidence_level"),
+            "confidence_reason": evaluation_result.get("confidence_reason"),
+        }
+
+    confidence = 100.0
+    reasons = []
+    rubric_score = clamp_report_score(evaluation_result.get("rubric_match_score", final_score))
+    requirement_scores = evaluation_result.get("requirement_scores") or []
+    requirement_count = len(requirement_scores) if isinstance(requirement_scores, list) else 0
+    role_mismatch_level = evaluation_result.get("role_mismatch_level") or "UNKNOWN"
+
+    if ai_status != "processed":
+        confidence -= 30
+        reasons.append("Báo cáo chưa được xử lý hoàn chỉnh.")
+
+    if report_source != "gemini":
+        confidence -= 25
+        reasons.append("Báo cáo không được tạo đầy đủ từ Gemini.")
+
+    if llm_score is None:
+        confidence -= 25
+        reasons.append("Thiếu điểm đánh giá ngữ cảnh từ LLM.")
+    else:
+        diff = abs(rubric_score - llm_score)
+        if diff <= 15:
+            reasons.append("Rubric và LLM khá nhất quán.")
+        elif diff <= 30:
+            confidence -= 15
+            reasons.append("Rubric và LLM có chênh lệch trung bình.")
+        else:
+            confidence -= 30
+            reasons.append("Rubric và LLM chênh lệch lớn, cần HR xem xét kỹ.")
+
+    if requirement_count < 3:
+        confidence -= 15
+        reasons.append("JD có ít tiêu chí rõ ràng để đối chiếu.")
+
+    if role_mismatch_level == "HIGH":
+        confidence -= 10
+        reasons.append("Hồ sơ có dấu hiệu lệch nhóm vai trò/ITSS đáng kể.")
+
+    if embedding_score is not None and embedding_score < 20 and llm_score is not None and llm_score >= 75:
+        confidence -= 10
+        reasons.append("Embedding similarity thấp trong khi LLM đánh giá cao.")
+
+    confidence = clamp_report_score(confidence)
+    if confidence >= 75:
+        level = "HIGH"
+    elif confidence >= 50:
+        level = "MEDIUM"
+    else:
+        level = "LOW"
+
+    return {
+        "confidence_score": confidence,
+        "confidence_level": level,
+        "confidence_reason": " ".join(reasons) if reasons else "Các tín hiệu đánh giá tương đối ổn định.",
+    }
+
 @router.get("/job/{job_id}", response_model=List[ApplicationDetailResponse])
 async def get_applications_by_job(
     job_id: uuid.UUID,
@@ -173,17 +317,17 @@ async def get_application_ai_report(
     final_match_score = float(application.final_match_score) if application.final_match_score is not None else match_score
     ai_status = application.ai_status or ("processed" if application.extracted_data or application.match_score is not None else "queued")
     ai_error = application.ai_error or ""
-    evaluation_result = application.evaluation_result or {}
+    evaluation_result = parse_json_object(application.evaluation_result)
 
     app_id_str = str(application.id)
     avatar_color = get_avatar_color(app_id_str)
     initials = get_initials(applicant_name)
 
     itss_category = application.job.itss_category if application.job and getattr(application.job, "itss_category", None) else "Software Development"
-    itss_level = f"Level {application.job.itss_level}" if application.job and getattr(application.job, "itss_level", None) else "Level 3"
+    itss_level = format_itss_level(application.job.itss_level if application.job and getattr(application.job, "itss_level", None) else 3)
 
     ai_itss_predicted = itss_pred.get("category", itss_category)
-    ai_itss_level = f"Level {itss_pred.get('level', 3)}"
+    ai_itss_level = format_itss_level(itss_pred.get("level", 3))
 
     # 4. KÍCH HOẠT PURE GENERATIVE AI ENGINE HOẶC HYBRID FALLBACK
     ai_report_data = ext_data.get("ai_report", {})
@@ -231,12 +375,12 @@ async def get_application_ai_report(
         soft_score = min(100, max(50, int(final_match_score * 0.85 + 25)))
         culture_score = min(100, max(50, int(lang_score * 0.8 + 20)))
 
+        radar_labels = get_fallback_radar_labels(application.job)
+        radar_scores = [tech_score, exp_score, lang_score, soft_score, culture_score]
+        radar_required = [80, 75, 70, 75, 80]
         radar_data = [
-            {"label": "Chuyên môn",  "candidate": tech_score,    "required": 80},
-            {"label": "Kinh nghiệm", "candidate": exp_score,     "required": 75},
-            {"label": "Ngoại ngữ",   "candidate": lang_score,    "required": 70},
-            {"label": "Kỹ năng mềm", "candidate": soft_score,    "required": 75},
-            {"label": "Văn hóa Nhật","candidate": culture_score, "required": 80},
+            {"label": label, "candidate": radar_scores[index], "required": radar_required[index]}
+            for index, label in enumerate(radar_labels)
         ]
 
         gaps = []
@@ -277,6 +421,23 @@ async def get_application_ai_report(
         report_source = "none"
         is_fallback = False
 
+    confidence_result = build_confidence_fallback(
+        evaluation_result=evaluation_result,
+        embedding_score=embedding_match_score,
+        llm_score=llm_match_score,
+        final_score=final_match_score,
+        ai_status=ai_status,
+        report_source=report_source,
+    )
+    evaluation_result = {
+        **evaluation_result,
+        **{
+            key: value
+            for key, value in confidence_result.items()
+            if evaluation_result.get(key) is None
+        },
+    }
+
     return {
         "application_id": app_id_str,
         "applicant_name": applicant_name,
@@ -293,8 +454,16 @@ async def get_application_ai_report(
         "final_match_score": final_match_score,
         "scoring_method": application.scoring_method or evaluation_result.get("scoring_method") or "embedding_cosine_v1",
         "evaluation_result": evaluation_result,
+
+        "confidence_score": confidence_result.get("confidence_score"),
+        "confidence_level": confidence_result.get("confidence_level"),
+        "confidence_reason": confidence_result.get("confidence_reason"),
+        
         "ai_status": ai_status,
         "ai_error": ai_error,
+        "last_ai_error": getattr(application, "last_ai_error", None) or "",
+        "last_ai_rerun_at": application.last_ai_rerun_at.isoformat() if getattr(application, "last_ai_rerun_at", None) else "",
+        "last_ai_attempt_status": getattr(application, "last_ai_attempt_status", None) or "",
         "report_source": report_source,
         "is_fallback": is_fallback,
         "itss_category": itss_category,

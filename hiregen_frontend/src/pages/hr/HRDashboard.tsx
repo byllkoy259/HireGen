@@ -11,15 +11,83 @@ interface PipelineRow {
     matchPct: number;
     matchCount: number;
     interviews: number;
-    status: 'screening' | 'pending-ai' | 'interviewing' | 'offer-sent';
+    status: JobStatus;
+}
+
+type JobStatus = 'open' | 'active' | 'closed' | 'draft' | 'pending';
+type ApplicationBucket = 'pending' | 'reviewed' | 'hired' | 'rejected';
+type ActivityType = 'apply' | 'ai' | 'job' | 'interview';
+
+interface CompanySummary {
+    id: string;
+    name: string;
+}
+
+interface DashboardJob {
+    id: string | number;
+    company_id?: string;
+    company_name?: string;
+    title?: string;
+    status?: string;
+}
+
+interface DashboardApplication {
+    applicant_name?: string;
+    applied_at?: string;
+    final_match_score?: string | number | null;
+    match_score?: string | number | null;
+    status?: string;
+}
+
+interface DonutSegment {
+    pct: number;
+    color: string;
+    label: string;
+}
+
+interface Activity {
+    type: ActivityType;
+    text: string;
+    time: string;
+    icon: string;
+}
+
+interface DashboardStats {
+    jobs: number;
+    candidates: number;
+    newCvs: number;
+    avgScore: number;
+}
+
+interface StatCardProps {
+    icon: string;
+    label: string;
+    value: string;
+    isHighlight?: boolean;
 }
 
 const STATUS_META = {
-    'screening':    { label: 'Đang Sàng lọc',  cls: 'badgeGray' },
-    'pending-ai':   { label: 'Chờ khớp AI',    cls: 'badgeAmber' },
-    'interviewing': { label: 'Đang phỏng vấn', cls: 'badgeBlue' },
-    'offer-sent':   { label: 'Đã gửi Offer',   cls: 'badgeGreen' },
+    open:    { label: 'Đang mở', cls: 'badgeGreen' },
+    active:  { label: 'Đang mở', cls: 'badgeGreen' },
+    pending: { label: 'Chờ duyệt', cls: 'badgeAmber' },
+    draft:   { label: 'Nháp', cls: 'badgeGray' },
+    closed:  { label: 'Đã đóng', cls: 'badgeRed' },
 } as const;
+
+const normalizeJobStatus = (status?: string): JobStatus => {
+    if (status === 'closed' || status === 'draft' || status === 'pending' || status === 'active') return status;
+    return 'open';
+};
+
+const normalizeApplicationBucket = (status?: string): ApplicationBucket => {
+    if (status === 'hired' || status === 'accepted' || status === 'offered') return 'hired';
+    if (status === 'rejected' || status === 'withdrawn') return 'rejected';
+    if (status === 'reviewing' || status === 'processed' || status === 'shortlisted' || status === 'interviewing') return 'reviewed';
+    return 'pending';
+};
+
+const getMatchScore = (application: DashboardApplication) =>
+    parseFloat(String(application.final_match_score ?? application.match_score ?? 0)) || 0;
 
 /* ─── Nav config: Dashboard là trang active ─────────────────── */
 const NAV_SECTIONS: NavSection[] = [
@@ -51,34 +119,35 @@ const NAV_SECTIONS: NavSection[] = [
 ];
 
 /* ─── Sub-components ─────────────────────────────────────────── */
-const DonutChart = ({ data, total }: { data: any[]; total: number }) => {
+const DonutChart = ({ data, total }: { data: DonutSegment[]; total: number }) => {
     const r = 70, cx = 90, cy = 90;
     const circ = 2 * Math.PI * r;
-    let offset = 0;
+    const slices = data.map((segment, index) => {
+        const dash = (segment.pct / 100) * circ;
+        const offset = data
+            .slice(0, index)
+            .reduce((sum, item) => sum + (item.pct / 100) * circ, 0);
+
+        return { segment, dash, gap: circ - dash, offset };
+    });
 
     return (
         <svg viewBox="0 0 180 180" className={styles.donutSvg}>
             <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f2f4f6" strokeWidth={20} />
-            {data.map((s) => {
-                const dash = (s.pct / 100) * circ;
-                const gap  = circ - dash;
-                const el = (
-                    <circle
-                        key={s.label} cx={cx} cy={cy} r={r} fill="none" stroke={s.color}
-                        strokeWidth={20} strokeDasharray={`${dash} ${gap}`} strokeDashoffset={-offset}
-                        style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px`, transition: 'stroke-dasharray 1s ease' }}
-                    />
-                );
-                offset += dash;
-                return el;
-            })}
+            {slices.map(({ segment, dash, gap, offset }) => (
+                <circle
+                    key={segment.label} cx={cx} cy={cy} r={r} fill="none" stroke={segment.color}
+                    strokeWidth={20} strokeDasharray={`${dash} ${gap}`} strokeDashoffset={-offset}
+                    style={{ transform: 'rotate(-90deg)', transformOrigin: `${cx}px ${cy}px`, transition: 'stroke-dasharray 1s ease' }}
+                />
+            ))}
             <text x={cx} y={cy - 8}  textAnchor="middle" className={styles.donutNumber}>{total}</text>
             <text x={cx} y={cy + 12} textAnchor="middle" className={styles.donutLabel}>TỔNG CV</text>
         </svg>
     );
 };
 
-const ActivityFeed = ({ activities }: { activities: any[] }) => {
+const ActivityFeed = ({ activities }: { activities: Activity[] }) => {
     if (!activities || activities.length === 0)
         return <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8' }}>Chưa có hoạt động nào.</div>;
 
@@ -99,7 +168,7 @@ const ActivityFeed = ({ activities }: { activities: any[] }) => {
     );
 };
 
-const StatCard = ({ icon, label, value, isHighlight = false }: any) => (
+const StatCard = ({ icon, label, value, isHighlight = false }: StatCardProps) => (
     <div className={`${styles.statCard} ${isHighlight ? styles.statCardHighlight : ''}`}>
         <div className={styles.statIconWrapper}>
             <span className="material-symbols-outlined">{icon}</span>
@@ -113,73 +182,57 @@ const StatCard = ({ icon, label, value, isHighlight = false }: any) => (
 
 /* ─── HRDashboard ────────────────────────────────────────────── */
 const HRDashboard: React.FC = () => {
-    const [stats, setStats]           = useState({ jobs: 0, candidates: 0, newCvs: 0, avgScore: 0 });
+    const [stats, setStats]           = useState<DashboardStats>({ jobs: 0, candidates: 0, newCvs: 0, avgScore: 0 });
     const [pipeline, setPipeline]     = useState<PipelineRow[]>([]);
-    const [donutData, setDonutData]   = useState<any[]>([]);
-    const [activities, setActivities] = useState<any[]>([]);
+    const [donutData, setDonutData]   = useState<DonutSegment[]>([]);
+    const [activities, setActivities] = useState<Activity[]>([]);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
                 const compRes = await axiosClient.get('/api/companies/me');
-                const compList = compRes.data || [];
+                const compList = (compRes.data || []) as CompanySummary[];
                 const compMap: Record<string, string> = {};
-                compList.forEach((c: any) => { compMap[c.id] = c.name; });
+                compList.forEach((c) => { compMap[String(c.id)] = c.name; });
 
                 const jobsRes = await axiosClient.get('/api/jobs/me');
-                const jobs = jobsRes.data || [];
+                const jobs = (jobsRes.data || []) as DashboardJob[];
 
-                let allApps: any[] = [];
-                let pipelineRows: PipelineRow[] = [];
-                let statusCounts = { pending: 0, reviewed: 0, hired: 0, rejected: 0 };
-                let dynamicActivities: any[] = [];
+                const allApps: DashboardApplication[] = [];
+                const pipelineRows: PipelineRow[] = [];
+                const statusCounts: Record<ApplicationBucket, number> = { pending: 0, reviewed: 0, hired: 0, rejected: 0 };
+                const dynamicActivities: Activity[] = [];
 
                 for (const job of jobs) {
                     try {
                         const appsRes = await axiosClient.get(`/api/hr/applications/job/${job.id}`);
-                        const apps = appsRes.data || [];
-                        allApps = [...allApps, ...apps];
+                        const apps = (appsRes.data || []) as DashboardApplication[];
+                        allApps.push(...apps);
 
                         // ĐÃ SỬA: So sánh trực tiếp với thang điểm 80
-                        const aiMatched    = apps.filter((a: any) => (parseFloat(a.final_match_score ?? a.match_score) || 0) >= 80).length;
-                        const interviewing = apps.filter((a: any) => a.status === 'interviewing').length;
-                        const offerOrHired = apps.filter((a: any) => ['offer-sent', 'hired'].includes(a.status)).length;
+                        const aiMatched    = apps.filter((a) => getMatchScore(a) >= 80).length;
+                        const interviewing = apps.filter((a) => a.status === 'interviewing').length;
 
-                        apps.forEach((a: any) => {
-                            const score = parseFloat(a.final_match_score ?? a.match_score) || 0;
+                        apps.forEach((a) => {
+                            const score = getMatchScore(a);
                             dynamicActivities.push({
                                 type: score >= 80 ? 'ai' : 'apply',
-                                text: `${a.applicant_name || 'Một ứng viên'} đã nộp CV vào vị trí ${job.title}`,
+                                text: `${a.applicant_name || 'Một ứng viên'} đã nộp CV vào vị trí ${job.title || 'chưa có tiêu đề'}`,
                                 time: new Date(a.applied_at || Date.now()).toLocaleDateString('vi-VN'),
                                 icon: score >= 80 ? 'auto_awesome' : 'description',
                             });
-                            if (statusCounts[a.status as keyof typeof statusCounts] !== undefined)
-                                statusCounts[a.status as keyof typeof statusCounts]++;
+                            statusCounts[normalizeApplicationBucket(a.status)]++;
                         });
 
-                        const partnerName = compMap[job.company_id] || job.company_name || 'Đối tác chưa cập nhật';
-
-                        let rowStatus: PipelineRow['status'] = 'screening';
-
-                        if (apps.length > 0) {
-                            if (offerOrHired > 0) {
-                                rowStatus = 'offer-sent';
-                            } else if (interviewing > 0) {
-                                rowStatus = 'interviewing';
-                            } else if (aiMatched > 0) {
-                                rowStatus = 'screening';
-                            } else {
-                                rowStatus = 'pending-ai';
-                            }
-                        }
+                        const partnerName = (job.company_id ? compMap[String(job.company_id)] : undefined) || job.company_name || 'Đối tác chưa cập nhật';
 
                         pipelineRows.push({
-                            job:        job.title,
+                            job:        job.title || 'Chưa có tiêu đề',
                             partner:    partnerName,
                             matchPct:   apps.length > 0 ? Math.round((aiMatched / apps.length) * 100) : 0,
                             matchCount: aiMatched,
                             interviews: interviewing,
-                            status:     rowStatus,
+                            status:     normalizeJobStatus(job.status),
                         });
                     } catch {
                         console.warn(`Không lấy được hồ sơ cho Job ${job.id}`);
@@ -187,14 +240,18 @@ const HRDashboard: React.FC = () => {
                 }
 
                 const totalApps  = allApps.length;
-                const totalScore = allApps.reduce((sum: number, a: any) => sum + (parseFloat(a.final_match_score ?? a.match_score) || 0), 0);
+                const totalScore = allApps.reduce((sum, a) => sum + getMatchScore(a), 0);
                 // ĐÃ SỬA: Gỡ bỏ phép nhân 100 thừa thớt để trả về đúng % thực tế
                 const avgScore   = totalApps > 0 ? Math.round(totalScore / totalApps) : 0;
+                const openJobs   = jobs.filter((job) => {
+                    const status = normalizeJobStatus(job.status);
+                    return status === 'open' || status === 'active';
+                }).length;
 
                 setStats({
-                    jobs:       jobs.length,
+                    jobs:       openJobs,
                     candidates: totalApps,
-                    newCvs:     allApps.filter(a => new Date(a.applied_at).toDateString() === new Date().toDateString()).length,
+                    newCvs:     allApps.filter(a => new Date(a.applied_at || 0).toDateString() === new Date().toDateString()).length,
                     avgScore,
                 });
                 setPipeline(pipelineRows.slice(0, 5));
@@ -207,8 +264,8 @@ const HRDashboard: React.FC = () => {
                         { pct: Math.round((statusCounts.hired    / totalApps) * 100) || 0, color: '#c4c6d1', label: 'Đã tuyển' },
                     ]);
                 }
-            } catch (error: any) {
-                console.error('Lỗi khi tải dữ liệu dashboard:', error.message);
+            } catch (error) {
+                console.error('Lỗi khi tải dữ liệu dashboard:', error instanceof Error ? error.message : error);
                 setStats({ jobs: 0, candidates: 0, newCvs: 0, avgScore: 0 });
                 setPipeline([]);
                 setDonutData([]);

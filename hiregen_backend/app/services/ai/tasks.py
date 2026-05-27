@@ -8,10 +8,10 @@ from sqlalchemy import update
 from sqlalchemy.future import select
 
 from app.core.celery_app import celery_app
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, engine
 from app.models.models import Application, JobDescription
 from app.services.ai.pdf_parser import get_and_parse_pdf_from_minio
-from app.services.ai.extractor import extract_cv_to_json
+from app.services.ai.extractor import PROMPT_VERSION, extract_cv_to_json
 from app.services.ai.embedding import get_text_embedding
 from app.services.ai.matcher import baseline_match_cv_with_jd
 
@@ -24,6 +24,102 @@ except Exception as exc:
     print(f"[ChromaDB Warning] Vector store is unavailable: {exc}")
     cv_collection = None
 
+PIPELINE_VERSION = "hybrid_standardized_v2"
+RUBRIC_VERSION = "itss_category_rubric_v1"
+MIN_CV_TEXT_LENGTH = 500
+MIN_JD_TEXT_LENGTH = 300
+
+ITSS_RUBRICS = {
+    "BUSINESS_APP_DEV": {
+        "label": "Business Application Development",
+        "core_keywords": [
+            "frontend", "backend", "web", "api", "rest api", "spring boot",
+            "react", "vue", "fastapi", "database", "sql", "postgresql",
+            "business system", "application", "microservices",
+        ],
+        "direct_roles": [
+            "frontend developer", "backend developer", "fullstack developer",
+            "software engineer", "web developer", "application developer",
+        ],
+    },
+    "SYSTEM_DEV": {
+        "label": "System Development",
+        "core_keywords": [
+            "embedded", "system", "linux", "os", "c++", "c#", "java",
+            "python", "iot", "mqtt", "sensor", "smart factory", "industrial",
+            "device", "performance", "backend", "api", "postgresql",
+        ],
+        "direct_roles": [
+            "embedded engineer", "system engineer", "software engineer",
+            "backend software engineer", "iot engineer",
+        ],
+    },
+    "PROJECT_MANAGEMENT": {
+        "label": "Project Management",
+        "core_keywords": [
+            "project management", "schedule", "planning", "risk",
+            "stakeholder", "scrum", "agile", "resource", "quality",
+            "delivery", "roadmap",
+        ],
+        "direct_roles": ["project manager", "scrum master", "team leader", "project leader"],
+    },
+    "IT_STRATEGY": {
+        "label": "IT Strategy",
+        "core_keywords": [
+            "strategy", "roadmap", "architecture", "enterprise architecture",
+            "business analysis", "solution design", "consulting", "it planning",
+        ],
+        "direct_roles": ["it consultant", "solution architect", "business analyst", "it strategist"],
+    },
+    "IT_SERVICE_MANAGEMENT": {
+        "label": "IT Service Management",
+        "core_keywords": [
+            "it support", "helpdesk", "service desk", "incident",
+            "troubleshooting", "user support", "account management",
+            "device setup", "windows", "microsoft office", "itil",
+        ],
+        "direct_roles": ["it support", "helpdesk", "service desk engineer", "it support engineer"],
+    },
+    "NETWORK_INFRA": {
+        "label": "Network / Infrastructure",
+        "core_keywords": [
+            "network", "infrastructure", "server", "linux", "cloud", "aws",
+            "azure", "docker", "kubernetes", "ci/cd", "security", "firewall",
+            "devops", "monitoring",
+        ],
+        "direct_roles": [
+            "infrastructure engineer", "network engineer", "cloud engineer",
+            "devops engineer", "security engineer",
+        ],
+    },
+    "GENERAL_IT": {
+        "label": "General IT",
+        "core_keywords": ["software", "system", "database", "api", "cloud", "network"],
+        "direct_roles": ["engineer", "developer", "it engineer"],
+    },
+}
+
+CATEGORY_COMPATIBILITY = {
+    ("BUSINESS_APP_DEV", "SYSTEM_DEV"): "MEDIUM",
+    ("SYSTEM_DEV", "BUSINESS_APP_DEV"): "MEDIUM",
+    ("SYSTEM_DEV", "NETWORK_INFRA"): "MEDIUM",
+    ("NETWORK_INFRA", "SYSTEM_DEV"): "MEDIUM",
+    ("IT_SERVICE_MANAGEMENT", "NETWORK_INFRA"): "MEDIUM",
+    ("NETWORK_INFRA", "IT_SERVICE_MANAGEMENT"): "MEDIUM",
+    ("IT_SERVICE_MANAGEMENT", "BUSINESS_APP_DEV"): "HIGH",
+    ("IT_SERVICE_MANAGEMENT", "SYSTEM_DEV"): "HIGH",
+    ("BUSINESS_APP_DEV", "IT_SERVICE_MANAGEMENT"): "HIGH",
+    ("SYSTEM_DEV", "IT_SERVICE_MANAGEMENT"): "HIGH",
+    ("PROJECT_MANAGEMENT", "BUSINESS_APP_DEV"): "MEDIUM",
+    ("PROJECT_MANAGEMENT", "SYSTEM_DEV"): "MEDIUM",
+    ("BUSINESS_APP_DEV", "PROJECT_MANAGEMENT"): "MEDIUM",
+    ("SYSTEM_DEV", "PROJECT_MANAGEMENT"): "MEDIUM",
+    ("IT_STRATEGY", "PROJECT_MANAGEMENT"): "MEDIUM",
+    ("IT_STRATEGY", "BUSINESS_APP_DEV"): "MEDIUM",
+    ("PROJECT_MANAGEMENT", "IT_STRATEGY"): "MEDIUM",
+    ("BUSINESS_APP_DEV", "IT_STRATEGY"): "MEDIUM",
+}
+
 
 async def update_application_ai_fields(application_id: str, **values: Any) -> None:
     async with AsyncSessionLocal() as session:
@@ -34,6 +130,59 @@ async def update_application_ai_fields(application_id: str, **values: Any) -> No
         except Exception as exc:
             await session.rollback()
             print(f"[PostgreSQL Error] Cannot update AI fields for application {application_id}: {exc}")
+
+
+async def mark_ai_attempt_error(
+    application_id: str,
+    message: str,
+    *,
+    keep_existing_report: bool,
+    status: str = "failed",
+) -> None:
+    now = datetime.utcnow()
+    values: dict[str, Any] = {
+        "last_ai_error": message,
+        "last_ai_rerun_at": now,
+        "last_ai_attempt_status": "retry_failed" if keep_existing_report else status,
+        "ai_error": message,
+    }
+
+    if keep_existing_report:
+        values["ai_status"] = "retry_failed"
+    else:
+        values.update({
+            "ai_status": status,
+            "report_source": "none",
+            "ai_processed_at": now,
+        })
+
+    await update_application_ai_fields(application_id, **values)
+
+
+async def load_application_context(application_id: str) -> dict[str, Any] | None:
+    async with AsyncSessionLocal() as session:
+        app_result = await session.execute(select(Application).where(Application.id == application_id))
+        app_obj = app_result.scalars().first()
+        if not app_obj:
+            return None
+
+        job_obj = None
+        if app_obj.job_id:
+            job_result = await session.execute(select(JobDescription).where(JobDescription.id == app_obj.job_id))
+            job_obj = job_result.scalars().first()
+
+        stable_gemini_report = bool(
+            app_obj.report_source == "gemini"
+            and app_obj.final_match_score is not None
+            and app_obj.extracted_data
+            and app_obj.evaluation_result
+        )
+
+        return {
+            "job": job_obj,
+            "stable_gemini_report": stable_gemini_report,
+            "resume_id": str(app_obj.resume_id) if app_obj.resume_id else "",
+        }
 
 
 def normalize_skills(extracted_data: dict) -> list[str]:
@@ -113,6 +262,179 @@ def keyword_score(haystack: str, keywords: list[str]) -> float:
 def stronger_mismatch_level(level_a: str, level_b: str) -> str:
     rank = {"UNKNOWN": 0, "LOW": 1, "MEDIUM": 2, "HIGH": 3}
     return level_a if rank.get(level_a, 0) >= rank.get(level_b, 0) else level_b
+
+
+def resolve_role_mismatch_level(role_level: str, category_mismatch: str, role_alignment_score: float) -> str:
+    if category_mismatch == "HIGH":
+        if role_alignment_score < 60:
+            return "HIGH"
+        if role_alignment_score >= 70:
+            return "MEDIUM"
+        return stronger_mismatch_level(role_level, "MEDIUM")
+
+    return stronger_mismatch_level(role_level, category_mismatch)
+
+
+def get_itss_family_from_text(*values: Any) -> str:
+    text = normalize_text(" ".join(str(value or "") for value in values))
+    if not text:
+        return "GENERAL_IT"
+
+    if has_any(text, ["business application development", "application development", "business app", "software development"]):
+        return "BUSINESS_APP_DEV"
+    if has_any(text, ["system development", "smart factory", "embedded", "iot", "industrial system"]):
+        return "SYSTEM_DEV"
+    if has_any(text, ["project management", "project manager", "scrum master", "project leader"]):
+        return "PROJECT_MANAGEMENT"
+    if has_any(text, ["it strategy", "strategy", "consultant", "solution architect", "business analyst"]):
+        return "IT_STRATEGY"
+    if has_any(text, ["it service management", "it support", "helpdesk", "service desk", "itil"]):
+        return "IT_SERVICE_MANAGEMENT"
+    if has_any(text, ["network", "infrastructure", "cloud", "devops", "security engineer"]):
+        return "NETWORK_INFRA"
+    return "GENERAL_IT"
+
+
+def get_job_family(job_obj: JobDescription | None) -> str:
+    if not job_obj:
+        return "GENERAL_IT"
+
+    category_family = get_itss_family_from_text(job_obj.itss_category)
+    if category_family != "GENERAL_IT":
+        return category_family
+
+    title_family = get_itss_family_from_text(job_obj.title)
+    if title_family != "GENERAL_IT":
+        return title_family
+
+    return get_itss_family_from_text(job_obj.description_text, job_obj.requirements_text)
+
+
+def infer_candidate_family(candidate_itss_category: str, cv_haystack: str) -> str:
+    predicted_family = get_itss_family_from_text(candidate_itss_category)
+    if predicted_family != "GENERAL_IT":
+        return predicted_family
+
+    best_family = "GENERAL_IT"
+    best_score = 0.0
+    for family, rubric in ITSS_RUBRICS.items():
+        if family == "GENERAL_IT":
+            continue
+        role_bonus = 0.25 if has_any(cv_haystack, rubric["direct_roles"]) else 0.0
+        score = keyword_score(cv_haystack, rubric["core_keywords"]) + role_bonus
+        if score > best_score:
+            best_family = family
+            best_score = score
+
+    return best_family if best_score >= 0.20 else "GENERAL_IT"
+
+
+def get_category_mismatch(job_family: str, candidate_family: str) -> str:
+    if not job_family or not candidate_family or "GENERAL_IT" in {job_family, candidate_family}:
+        return "UNKNOWN"
+    if job_family == candidate_family:
+        return "LOW"
+    return CATEGORY_COMPATIBILITY.get((job_family, candidate_family), "HIGH")
+
+
+def level_to_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    match = re.search(r"\d+", str(value))
+    return int(match.group()) if match else None
+
+
+def calculate_level_fit(candidate_level: Any, job_level: Any) -> float:
+    c = level_to_int(candidate_level)
+    j = level_to_int(job_level)
+    if c is None or j is None:
+        return 60.0
+
+    diff = c - j
+    if diff == 0:
+        return 100.0
+    if diff == -1:
+        return 75.0
+    if diff <= -2:
+        return 45.0
+    if diff == 1:
+        return 90.0
+    return 75.0
+
+
+def category_fit_score(mismatch_level: str) -> float:
+    return {
+        "LOW": 100.0,
+        "MEDIUM": 75.0,
+        "HIGH": 35.0,
+        "UNKNOWN": 60.0,
+    }.get(mismatch_level, 60.0)
+
+
+def calculate_confidence(
+    *,
+    rubric_score: float,
+    llm_score: float | None,
+    embedding_score: float | None,
+    role_mismatch_level: str,
+    ai_status: str = "processed",
+    report_source: str = "gemini",
+    requirement_count: int = 0,
+) -> dict:
+    confidence = 100.0
+    reasons = []
+
+    if ai_status != "processed":
+        confidence -= 30
+        reasons.append("Báo cáo chưa được xử lý hoàn chỉnh.")
+
+    if report_source != "gemini":
+        confidence -= 25
+        reasons.append("Báo cáo không được tạo đầy đủ từ Gemini.")
+
+    if llm_score is None:
+        confidence -= 25
+        reasons.append("Thiếu điểm đánh giá ngữ cảnh từ LLM.")
+    else:
+        diff = abs(rubric_score - llm_score)
+
+        if diff <= 15:
+            reasons.append("Rubric và LLM khá nhất quán.")
+        elif diff <= 30:
+            confidence -= 15
+            reasons.append("Rubric và LLM có chênh lệch trung bình.")
+        else:
+            confidence -= 30
+            reasons.append("Rubric và LLM chênh lệch lớn, cần HR xem xét kỹ.")
+
+    if requirement_count < 3:
+        confidence -= 15
+        reasons.append("JD có ít tiêu chí rõ ràng để đối chiếu.")
+
+    if role_mismatch_level == "HIGH":
+        confidence -= 10
+        reasons.append("Hồ sơ có dấu hiệu lệch nhóm vai trò/ITSS đáng kể.")
+
+    if embedding_score is not None and embedding_score < 20 and llm_score is not None and llm_score >= 75:
+        confidence -= 10
+        reasons.append("Embedding similarity thấp trong khi LLM đánh giá cao.")
+
+    confidence = clamp_score(confidence)
+
+    if confidence >= 75:
+        level = "HIGH"
+    elif confidence >= 50:
+        level = "MEDIUM"
+    else:
+        level = "LOW"
+
+    return {
+        "confidence_score": confidence,
+        "confidence_level": level,
+        "confidence_reason": " ".join(reasons) if reasons else "Các tín hiệu đánh giá tương đối ổn định.",
+    }
 
 
 def score_requirement_item(requirement: str, cv_haystack: str) -> tuple[float, list[str], str]:
@@ -196,42 +518,22 @@ def score_role_alignment(job_obj: JobDescription | None, cv_haystack: str) -> tu
     if not job_obj:
         return 50.0, "Không có đủ ngữ cảnh JD để đánh giá độ khớp vai trò.", "UNKNOWN"
 
-    job_text = normalize_text(" ".join([
-        job_obj.title or "",
-        job_obj.itss_category or "",
-        job_obj.description_text or "",
-        job_obj.requirements_text or "",
-    ]))
+    job_family = get_job_family(job_obj)
+    rubric = ITSS_RUBRICS.get(job_family, ITSS_RUBRICS["GENERAL_IT"])
+    family_label = rubric["label"]
+    core_score = keyword_score(cv_haystack, rubric["core_keywords"])
+    role_hit = has_any(cv_haystack, rubric["direct_roles"])
 
-    support_job = has_any(job_text, [
-        "it support", "helpdesk", "service desk", "it service management",
-        "ho tro", "nguoi dung", "cai dat", "cau hinh", "tai khoan", "thiet bi"
-    ])
-    direct_support = has_any(cv_haystack, [
-        "it support", "helpdesk", "service desk", "user support", "ho tro nguoi dung",
-        "cai dat", "cau hinh", "quan ly tai khoan", "windows"
-    ])
-    support_adjacent = has_any(cv_haystack, [
-        "linux", "documentation", "tai lieu", "phan tich loi", "canh bao loi",
-        "bao tri", "he thong", "docker", "aws", "communication"
-    ])
-    development_heavy = has_any(cv_haystack, [
-        "backend software engineer", "software engineer", "backend developer",
-        "spring boot", "fastapi", "rest api", "microservices"
-    ])
+    if role_hit and core_score >= 0.15:
+        return 85.0, f"CV có tín hiệu vai trò và kỹ năng khớp với nhóm {family_label}.", "LOW"
+    if role_hit:
+        return 75.0, f"CV có tín hiệu vai trò phù hợp với nhóm {family_label}, cần xác minh thêm chiều sâu kỹ năng.", "LOW"
+    if core_score >= 0.35:
+        return 80.0, f"CV có nhiều kỹ năng cốt lõi phù hợp với nhóm {family_label}.", "LOW"
+    if core_score >= 0.18:
+        return 60.0, f"CV có một số tín hiệu liên quan đến nhóm {family_label}, nhưng chưa thật sự đầy đủ.", "MEDIUM"
 
-    if support_job:
-        if direct_support:
-            return 80.0, "CV có tín hiệu trực tiếp về IT Support/helpdesk hoặc hỗ trợ người dùng.", "LOW"
-        if support_adjacent and development_heavy:
-            return 40.0, "CV thiên mạnh về phát triển phần mềm/backend; chỉ có tín hiệu liền kề như hệ thống, xử lý lỗi, tài liệu hoặc giao tiếp, chưa có kinh nghiệm IT Support trực tiếp.", "HIGH"
-        if support_adjacent:
-            return 55.0, "CV có một số tín hiệu liền kề IT Support nhưng chưa thể hiện rõ vai trò support/helpdesk.", "MEDIUM"
-        return 30.0, "JD thiên về IT Support trong khi CV gần như không có bằng chứng hỗ trợ người dùng hoặc vận hành IT nội bộ.", "HIGH"
-
-    if development_heavy:
-        return 75.0, "Định hướng CV phù hợp với JD thiên về phát triển phần mềm.", "LOW"
-    return 60.0, "Không phát hiện lệch vai trò nghiêm trọng.", "LOW"
+    return 35.0, f"CV thiếu tín hiệu rõ ràng cho nhóm {family_label}.", "HIGH"
 
 
 def calculate_hybrid_match_score(
@@ -240,6 +542,8 @@ def calculate_hybrid_match_score(
     job_obj: JobDescription | None,
     jd_text: str,
     embedding_score: float | None,
+    ai_status: str = "processed",
+    report_source: str = "gemini",
 ) -> dict:
     cv_haystack = normalize_text(flatten_text(extracted_data))
     requirements_text = job_obj.requirements_text if job_obj else jd_text
@@ -262,32 +566,36 @@ def calculate_hybrid_match_score(
 
     role_alignment_score, role_alignment_reason, role_mismatch_level = score_role_alignment(job_obj, cv_haystack)
     candidate_itss = extracted_data.get("itss_prediction") or {}
-    candidate_itss_category = normalize_text(candidate_itss.get("category") if isinstance(candidate_itss, dict) else "")
-    job_itss_category = normalize_text(job_obj.itss_category if job_obj else "")
-    itss_category_mismatch_level = "LOW"
-    if candidate_itss_category and job_itss_category:
-        same_category = candidate_itss_category in job_itss_category or job_itss_category in candidate_itss_category
-        if not same_category:
-            itss_category_mismatch_level = "MEDIUM"
-            if has_any(job_itss_category, ["it service management", "service management", "support"]) and has_any(
-                candidate_itss_category,
-                ["business application", "software", "development", "application development"],
-            ):
-                itss_category_mismatch_level = "HIGH"
-    role_mismatch_level = stronger_mismatch_level(role_mismatch_level, itss_category_mismatch_level)
-    rubric_score = clamp_score(requirement_avg * 0.60 + role_alignment_score * 0.40)
+    candidate_itss_category = candidate_itss.get("category") if isinstance(candidate_itss, dict) else ""
+    candidate_itss_level = candidate_itss.get("level") if isinstance(candidate_itss, dict) else None
+    job_family = get_job_family(job_obj)
+    candidate_family = infer_candidate_family(candidate_itss_category, cv_haystack)
+    itss_category_mismatch_level = get_category_mismatch(job_family, candidate_family)
+    level_fit_score = calculate_level_fit(candidate_itss_level, job_obj.itss_level if job_obj else None)
+    category_score = category_fit_score(itss_category_mismatch_level)
+    role_mismatch_level = resolve_role_mismatch_level(
+        role_mismatch_level,
+        itss_category_mismatch_level,
+        role_alignment_score,
+    )
+    rubric_score = clamp_score(
+        requirement_avg * 0.45
+        + role_alignment_score * 0.30
+        + level_fit_score * 0.15
+        + category_score * 0.10
+    )
     llm_score = extract_llm_match_score(extracted_data)
 
     weighted_parts = []
     if llm_score is not None:
-        weighted_parts.append(("llm", llm_score, 0.55))
-        weighted_parts.append(("rubric", rubric_score, 0.30))
+        weighted_parts.append(("rubric", rubric_score, 0.55))
+        weighted_parts.append(("llm", llm_score, 0.30))
         if embedding_score is not None:
             weighted_parts.append(("embedding", embedding_score, 0.15))
     else:
-        weighted_parts.append(("rubric", rubric_score, 0.65))
+        weighted_parts.append(("rubric", rubric_score, 0.80))
         if embedding_score is not None:
-            weighted_parts.append(("embedding", embedding_score, 0.35))
+            weighted_parts.append(("embedding", embedding_score, 0.20))
 
     total_weight = sum(weight for _, _, weight in weighted_parts)
     final_score = sum(score * weight for _, score, weight in weighted_parts) / total_weight if total_weight else rubric_score
@@ -295,7 +603,7 @@ def calculate_hybrid_match_score(
     if role_mismatch_level == "HIGH":
         final_score = min(final_score, 45.0)
     elif role_mismatch_level == "MEDIUM":
-        final_score = min(final_score, 60.0)
+        final_score = min(final_score, 85.0)
 
     score_label = "Phù hợp thấp - Có tiềm năng chuyển hướng"
     if final_score >= 80:
@@ -304,6 +612,16 @@ def calculate_hybrid_match_score(
         score_label = "Phù hợp tiềm năng"
     elif final_score < 35:
         score_label = "Phù hợp thấp"
+
+    confidence_result = calculate_confidence(
+        rubric_score=rubric_score,
+        llm_score=llm_score,
+        embedding_score=embedding_score,
+        role_mismatch_level=role_mismatch_level,
+        ai_status=ai_status,
+        report_source=report_source,
+        requirement_count=len(requirement_scores),
+    )
 
     scoring_method = "hybrid_llm_rubric_embedding_v1" if llm_score is not None else "hybrid_rubric_embedding_v1"
     return {
@@ -317,7 +635,14 @@ def calculate_hybrid_match_score(
         "role_alignment_reason": role_alignment_reason,
         "role_mismatch_level": role_mismatch_level,
         "itss_category_mismatch_level": itss_category_mismatch_level,
+        "job_family": job_family,
+        "candidate_family": candidate_family,
+        "level_fit_score": level_fit_score,
+        "category_fit_score": category_score,
         "score_label": score_label,
+        "confidence_score": confidence_result["confidence_score"],
+        "confidence_level": confidence_result["confidence_level"],
+        "confidence_reason": confidence_result["confidence_reason"],
         "score_weights": [
             {"source": source, "score": score, "weight": weight}
             for source, score, weight in weighted_parts
@@ -362,7 +687,14 @@ def build_evaluation_result(
         "role_alignment_reason": hybrid_result.get("role_alignment_reason"),
         "role_mismatch_level": hybrid_result.get("role_mismatch_level"),
         "itss_category_mismatch_level": hybrid_result.get("itss_category_mismatch_level"),
+        "job_family": hybrid_result.get("job_family"),
+        "candidate_family": hybrid_result.get("candidate_family"),
+        "level_fit_score": hybrid_result.get("level_fit_score"),
+        "category_fit_score": hybrid_result.get("category_fit_score"),
         "score_label": hybrid_result.get("score_label"),
+        "confidence_score": hybrid_result.get("confidence_score"),
+        "confidence_level": hybrid_result.get("confidence_level"),
+        "confidence_reason": hybrid_result.get("confidence_reason"),
         "score_weights": hybrid_result.get("score_weights", []),
         "matched_skills": matched_skills,
         "missing_skills": missing_skills,
@@ -374,7 +706,9 @@ def build_evaluation_result(
         "recommendation": ai_report.get("recommendation", "") if isinstance(ai_report, dict) else "",
         "report_source": report_source,
         "ai_status": ai_status,
-        "pipeline_version": "hybrid_standardized_v1",
+        "pipeline_version": PIPELINE_VERSION,
+        "prompt_version": PROMPT_VERSION,
+        "rubric_version": RUBRIC_VERSION,
         "embedding_model": "all-MiniLM-L6-v2",
         "llm_model": "gemini-2.5-flash",
     }
@@ -382,21 +716,46 @@ def build_evaluation_result(
 
 async def async_process_cv_pipeline(application_id: str, file_url: str):
     print(f"\n[Pipeline] Start AI processing for application ID: {application_id}")
+    context = await load_application_context(application_id)
+    if not context:
+        print(f"[Pipeline Error] Application not found: {application_id}")
+        return
+
+    keep_existing_report = bool(context["stable_gemini_report"])
     await update_application_ai_fields(
         application_id,
         ai_status="processing",
         ai_error=None,
-        report_source="none",
+        last_ai_error=None,
+        last_ai_rerun_at=datetime.utcnow(),
+        last_ai_attempt_status="processing",
     )
+
+    if not file_url:
+        await mark_ai_attempt_error(
+            application_id,
+            "Resume URL is missing; cannot run AI matching.",
+            keep_existing_report=keep_existing_report,
+            status="failed",
+        )
+        return
 
     cv_text = get_and_parse_pdf_from_minio(file_url)
     if not cv_text:
-        await update_application_ai_fields(
+        await mark_ai_attempt_error(
             application_id,
-            ai_status="failed",
-            ai_error=f"Cannot read or parse CV file: {file_url}",
-            report_source="none",
-            ai_processed_at=datetime.utcnow(),
+            f"Cannot read or parse CV file: {file_url}",
+            keep_existing_report=keep_existing_report,
+            status="failed",
+        )
+        return
+
+    if len(cv_text.strip()) < MIN_CV_TEXT_LENGTH:
+        await mark_ai_attempt_error(
+            application_id,
+            f"CV text is too short for reliable AI scoring ({len(cv_text.strip())} characters).",
+            keep_existing_report=keep_existing_report,
+            status="failed",
         )
         return
 
@@ -418,9 +777,45 @@ async def async_process_cv_pipeline(application_id: str, file_url: str):
         except Exception as exc:
             print(f"[DB Error] Cannot load JD context: {exc}")
 
+    if not job_obj:
+        await mark_ai_attempt_error(
+            application_id,
+            "Job not found; cannot run AI matching.",
+            keep_existing_report=keep_existing_report,
+            status="failed",
+        )
+        return
+
+    if len(jd_text.strip()) < MIN_JD_TEXT_LENGTH or not (job_obj.description_text and job_obj.requirements_text):
+        await mark_ai_attempt_error(
+            application_id,
+            f"JD text is too short or incomplete for reliable AI scoring ({len(jd_text.strip())} characters).",
+            keep_existing_report=keep_existing_report,
+            status="failed",
+        )
+        return
+
     extracted_data = await extract_cv_to_json(cv_text, jd_text)
     gemini_ok = bool(extracted_data)
+    if not extracted_data:
+        extracted_data = {
+            "raw_cv_text": cv_text,
+            "skills": [],
+            "itss_prediction": {},
+            "ai_report": {}
+        }
+
     report_source = "gemini" if extracted_data.get("ai_report") else "none"
+
+    if not gemini_ok and keep_existing_report:
+        await mark_ai_attempt_error(
+            application_id,
+            "Gemini extraction failed after retries; kept the previous successful AI report.",
+            keep_existing_report=True,
+            status="retry_failed",
+        )
+        print(f"[Pipeline] Gemini failed; kept previous processed Gemini report for application {application_id}\n")
+        return
 
     skills = normalize_skills(extracted_data)
     skills_text = ", ".join(skills) if skills else cv_text[:1000]
@@ -455,7 +850,8 @@ async def async_process_cv_pipeline(application_id: str, file_url: str):
         ai_error = None
     elif gemini_ok or embedding_score is not None:
         ai_status = "partial"
-        ai_error = None if gemini_ok else "Gemini extraction failed; embedding score was calculated from raw CV text."
+        report_source = report_source if gemini_ok else "fallback"
+        ai_error = None if gemini_ok else "Gemini extraction failed after retries; fallback score was calculated from raw CV text."
     else:
         ai_status = "failed"
         ai_error = "Gemini extraction and embedding matching both failed."
@@ -465,6 +861,8 @@ async def async_process_cv_pipeline(application_id: str, file_url: str):
         job_obj=job_obj,
         jd_text=jd_text,
         embedding_score=embedding_score,
+        ai_status=ai_status,
+        report_source=report_source,
     )
     final_score = hybrid_result.get("final_match_score")
     llm_score = hybrid_result.get("llm_match_score")
@@ -496,6 +894,9 @@ async def async_process_cv_pipeline(application_id: str, file_url: str):
         scoring_method=evaluation_result["scoring_method"],
         ai_status=ai_status,
         ai_error=ai_error,
+        last_ai_error=ai_error,
+        last_ai_rerun_at=datetime.utcnow(),
+        last_ai_attempt_status=ai_status,
         report_source=report_source,
         ai_processed_at=datetime.utcnow(),
     )
@@ -505,4 +906,10 @@ async def async_process_cv_pipeline(application_id: str, file_url: str):
 
 @celery_app.task(name="process_candidate_cv_task")
 def process_candidate_cv_task(application_id: str, file_url: str):
-    asyncio.run(async_process_cv_pipeline(application_id, file_url))
+    async def runner():
+        try:
+            await async_process_cv_pipeline(application_id, file_url)
+        finally:
+            await engine.dispose()
+
+    asyncio.run(runner())

@@ -35,7 +35,7 @@ const NAV_SECTIONS: NavSection[] = [
 ];
 
 /* ─── Types ──────────────────────────────────────────────────── */
-type AppStatus = 'pending' | 'processed' | 'reviewing' | 'interviewing' | 'rejected' | 'hired' | 'accepted';
+type AppStatus = 'pending' | 'processed' | 'reviewing' | 'shortlisted' | 'interviewing' | 'rejected' | 'hired' | 'accepted';
 type FilterTab = 'all' | 'ai80' | 'pending' | 'interviewing' | 'rejected';
 type SortKey   = 'match_score' | 'applied_at' | 'applicant_name';
 
@@ -63,12 +63,23 @@ interface Candidate {
 /* ─── Status meta ────────────────────────────────────────────── */
 const STATUS_META: Record<AppStatus, { label: string; cls: string }> = {
     pending:      { label: 'Mới nộp',       cls: 'sPending' },
-    processed:    { label: 'Đã phân tích AI',      cls: 'sReviewing' },
+    processed:    { label: 'Đang đánh giá', cls: 'sReviewing' },
     reviewing:    { label: 'Đang đánh giá', cls: 'sReviewing' },
+    shortlisted:  { label: 'Đạt sơ tuyển',  cls: 'sShortlisted' },
     interviewing: { label: 'Hẹn phỏng vấn', cls: 'sInterviewing' },
     rejected:     { label: 'Từ chối',       cls: 'sRejected' },
     hired:        { label: 'Đã tuyển',      cls: 'sHired' },
-    accepted:     { label: 'Đã chấp nhận',  cls: 'sHired' },
+    accepted:     { label: 'Đã tuyển',      cls: 'sHired' },
+};
+
+const ACTION_STATUSES: AppStatus[] = ['pending', 'reviewing', 'shortlisted', 'interviewing', 'rejected', 'hired'];
+
+const normalizeStatus = (status?: string): AppStatus => {
+    if (status === 'processed') return 'reviewing';
+    if (status === 'accepted') return 'hired';
+    if (status === 'shortlisted') return 'shortlisted';
+    if (status === 'interviewing' || status === 'rejected' || status === 'hired' || status === 'reviewing' || status === 'pending') return status;
+    return 'pending';
 };
 
 /* ─── Helpers ────────────────────────────────────────────────── */
@@ -236,7 +247,7 @@ const HRCandidates: React.FC = () => {
                                         ? predictedLevel
                                         : undefined,
 
-                                status: a.status || 'pending',
+                                status: normalizeStatus(a.status),
 
                                 applied_at:
                                     a.applied_at ||
@@ -547,9 +558,9 @@ const HRCandidates: React.FC = () => {
                         onClick={e => e.stopPropagation()}
                     >
                         <p className={styles.dropLabel}>Cập nhật trạng thái</p>
-                        {(Object.keys(STATUS_META) as AppStatus[]).map(s => {
+                        {ACTION_STATUSES.map(s => {
                             const currentApp = candidates.find(c => c.application_id === openMenuId);
-                            const isActive = currentApp?.status === s;
+                            const isActive = normalizeStatus(currentApp?.status) === s;
                             return (
                                 <button 
                                     key={s} 

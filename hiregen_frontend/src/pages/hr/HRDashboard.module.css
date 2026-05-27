@@ -108,6 +108,7 @@
 .badgeAmber  { background: #fef3c7; color: #92400e; }
 .badgeGreen  { background: #d1fae5; color: #065f46; }
 .badgeGray   { background: #f1f5f9; color: #475569; }
+.badgeRed    { background: #fee2e2; color: #991b1b; }
 
 /* ─── Donut Chart ────────────────────────────────────────────── */
 .donutContainer { display: flex; align-items: center; padding: 20px; flex: 1; }

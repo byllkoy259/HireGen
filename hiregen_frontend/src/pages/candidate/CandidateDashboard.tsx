@@ -60,6 +60,14 @@ const STAGE_META: Record<AppStage, { label: string; cls: string; icon: string }>
     rejected:  { label: 'Không phù hợp',           cls: 'stageRejected',  icon: 'close' },
 };
 
+const normalizeStage = (status?: string): AppStage => {
+    if (status === 'interviewing') return 'interviewing';
+    if (status === 'rejected' || status === 'withdrawn') return 'rejected';
+    if (status === 'hired' || status === 'accepted' || status === 'offered') return 'hired';
+    if (status === 'reviewing' || status === 'processed' || status === 'shortlisted') return 'reviewing';
+    return 'pending';
+};
+
 /* ═══════════════════════════════════════════════════════════════
    CandidateDashboard
 ═══════════════════════════════════════════════════════════════ */
@@ -101,11 +109,7 @@ const CandidateDashboard: React.FC = () => {
                             companyColor: '#1e4067',
                             logo_url: app.job?.company?.logo_url || app.job?.logo_url || '',
                             location: app.job?.location,
-                            stage: app.status === 'pending' ? 'pending' :
-                                app.status === 'reviewing' ? 'reviewing' :
-                                app.status === 'interviewing' ? 'interviewing' :
-                                app.status === 'hired' ? 'hired' :
-                                app.status === 'rejected' ? 'rejected' : 'reviewing',
+                            stage: normalizeStage(app.status),
                             applied_at: new Date(app.applied_at).toLocaleDateString('vi-VN'),
                             icon: 'work'
                         };

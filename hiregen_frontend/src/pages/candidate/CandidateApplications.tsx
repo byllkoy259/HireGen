@@ -44,6 +44,14 @@ const FILTER_TABS: { key: 'all' | AppStage; label: string }[] = [
     { key: 'rejected',  label: 'Đã từ chối' },
 ];
 
+const normalizeStage = (status?: string): AppStage => {
+    if (status === 'interviewing') return 'interviewing';
+    if (status === 'rejected' || status === 'withdrawn') return 'rejected';
+    if (status === 'hired' || status === 'accepted' || status === 'offered') return 'hired';
+    if (status === 'reviewing' || status === 'processed' || status === 'shortlisted') return 'reviewing';
+    return 'pending';
+};
+
 /* ═══════════════════════════════════════════════════════════════
    CandidateApplications Component
 ═══════════════════════════════════════════════════════════════ */
@@ -67,12 +75,7 @@ const CandidateApplications: React.FC = () => {
                 const rawData = res.data || [];
                 
                 const loadedApps: ApplicationDetail[] = rawData.map((app: any) => {
-                    let stage: AppStage = 'pending';
-                    if (app.status === 'reviewing') stage = 'reviewing';
-                    else if (app.status === 'interviewing') stage = 'interviewing';
-                    else if (app.status === 'hired' || app.status === 'offered') stage = 'hired';
-                    else if (app.status === 'rejected') stage = 'rejected';
-                    else if (app.status === 'pending') stage = 'pending';
+                    const stage = normalizeStage(app.status);
 
                     const companyName = app.job?.company?.name;
                     const initial = companyName.charAt(0).toUpperCase();
