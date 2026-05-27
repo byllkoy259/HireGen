@@ -82,10 +82,14 @@ async def upload_resume_file_api(
         await ensure_candidate_profile_exists(db, current_user)
         
         file_data = await file.read()
-        filename_original = file.filename
+        object_name = minio_service.build_unique_object_name(
+            prefix="resumes",
+            owner_id=str(current_user.id),
+            filename=file.filename,
+        )
         
         cv_url = minio_service.upload_file(
-            object_name=filename_original,
+            object_name=object_name,
             file_data=file_data,
             content_type=file.content_type
         )

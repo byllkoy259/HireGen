@@ -379,6 +379,7 @@ def calculate_confidence(
     llm_score: float | None,
     embedding_score: float | None,
     role_mismatch_level: str,
+    itss_category_mismatch_level: str = "UNKNOWN",
     ai_status: str = "processed",
     report_source: str = "gemini",
     requirement_count: int = 0,
@@ -414,12 +415,32 @@ def calculate_confidence(
         reasons.append("JD có ít tiêu chí rõ ràng để đối chiếu.")
 
     if role_mismatch_level == "HIGH":
-        confidence -= 10
+        confidence -= 15
         reasons.append("Hồ sơ có dấu hiệu lệch nhóm vai trò/ITSS đáng kể.")
+    elif role_mismatch_level == "MEDIUM":
+        confidence -= 8
+        reasons.append("Hồ sơ có một phần lệch vai trò, cần HR xác minh thêm.")
 
-    if embedding_score is not None and embedding_score < 20 and llm_score is not None and llm_score >= 75:
+    if itss_category_mismatch_level == "HIGH":
+        confidence -= 20
+        reasons.append("ITSS category dự đoán lệch mạnh so với JD.")
+    elif itss_category_mismatch_level == "MEDIUM":
         confidence -= 10
-        reasons.append("Embedding similarity thấp trong khi LLM đánh giá cao.")
+        reasons.append("ITSS category dự đoán chỉ tương thích một phần với JD.")
+
+    if embedding_score is not None:
+        if embedding_score < 20:
+            confidence -= 20
+            reasons.append("Embedding similarity rất thấp so với yêu cầu JD.")
+            if llm_score is not None and llm_score >= 75:
+                confidence -= 10
+                reasons.append("LLM đánh giá cao nhưng embedding thấp, cần HR xác minh thủ công.")
+        elif embedding_score < 35:
+            confidence -= 10
+            reasons.append("Embedding similarity thấp, độ tin cậy cần được giảm.")
+        elif embedding_score < 50:
+            confidence -= 5
+            reasons.append("Embedding similarity ở mức trung bình thấp.")
 
     confidence = clamp_score(confidence)
 
@@ -512,6 +533,121 @@ def score_requirement_item(requirement: str, cv_haystack: str) -> tuple[float, l
     matched = [token for token in req_tokens if token in cv_haystack]
     evidence.extend(matched[:5])
     return clamp_score((len(matched) / len(req_tokens)) * 100), evidence, note
+
+
+JD_GAP_STOPWORDS = {
+    "candidate", "requirement", "experience", "skill", "skills", "level", "work",
+    "project", "system", "software", "ability", "knowledge", "understanding",
+    "ung", "vien", "kinh", "nghiem", "ky", "nang", "yeu", "cau", "can", "co",
+    "voi", "cho", "cac", "va", "hoac", "trong", "tren", "duoc", "lam", "viec",
+}
+
+
+def gap_skill_text(gap: Any) -> str:
+    if isinstance(gap, dict):
+        return str(gap.get("skill") or gap.get("name") or gap.get("requirement") or "").strip()
+    return str(gap or "").strip()
+
+
+def extract_gap_tokens(text: str) -> set[str]:
+    normalized = normalize_text(text)
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", normalized)
+        if len(token) >= 3 and token not in JD_GAP_STOPWORDS
+    }
+
+
+def gap_matches_jd_requirement(gap_text: str, requirement_items: list[str], jd_text: str) -> bool:
+    gap_norm = normalize_text(gap_text)
+    if not gap_norm:
+        return False
+
+    jd_norm = normalize_text(jd_text)
+    if gap_norm in jd_norm:
+        return True
+
+    synonym_groups = [
+        {"japanese", "jlpt", "tieng nhat", "nhat"},
+        {"english", "toeic", "ielts", "tieng anh", "anh"},
+        {"aws", "amazon web services"},
+        {"kubernetes", "k8s"},
+        {"ci cd", "ci", "cd"},
+    ]
+    for group in synonym_groups:
+        if any(term in gap_norm for term in group) and any(term in jd_norm for term in group):
+            return True
+
+    gap_tokens = extract_gap_tokens(gap_text)
+    if not gap_tokens:
+        return False
+
+    for requirement in requirement_items:
+        req_tokens = extract_gap_tokens(requirement)
+        if gap_tokens & req_tokens:
+            return True
+    return False
+
+
+def requirement_gap_label(requirement: str) -> str:
+    req_norm = normalize_text(requirement)
+    labels = [
+        ("Japanese/JLPT", ["tieng nhat", "jlpt", "japanese"]),
+        ("English", ["tieng anh", "english", "toeic", "ielts"]),
+        ("Microsoft Office", ["microsoft office", "excel", "word", "powerpoint", "office"]),
+        ("User support", ["ho tro nguoi dung", "support", "helpdesk", "service desk"]),
+        ("Network/OS", ["mang", "network", "windows", "linux", "he dieu hanh"]),
+    ]
+    for label, terms in labels:
+        if has_any(req_norm, terms):
+            return label
+    return requirement[:80]
+
+
+def sanitize_ai_report_gaps(extracted_data: dict, requirement_scores: list[dict], jd_text: str) -> None:
+    ai_report = extracted_data.get("ai_report")
+    if not isinstance(ai_report, dict):
+        return
+
+    requirement_items = [
+        str(item.get("requirement", "")).strip()
+        for item in requirement_scores
+        if isinstance(item, dict) and str(item.get("requirement", "")).strip()
+    ]
+
+    filtered_gaps = []
+    for gap in ai_report.get("gaps") or []:
+        skill = gap_skill_text(gap)
+        if gap_matches_jd_requirement(skill, requirement_items, jd_text):
+            filtered_gaps.append(gap)
+
+    existing_gap_keys = {normalize_text(gap_skill_text(gap)) for gap in filtered_gaps}
+    for item in requirement_scores:
+        if not isinstance(item, dict):
+            continue
+        requirement = str(item.get("requirement", "")).strip()
+        if not requirement:
+            continue
+        try:
+            score = float(item.get("score", 100))
+        except (TypeError, ValueError):
+            score = 100.0
+        if score >= 60:
+            continue
+
+        label = requirement_gap_label(requirement)
+        label_key = normalize_text(label)
+        if label_key in existing_gap_keys:
+            continue
+        filtered_gaps.append({
+            "skill": label,
+            "required": 4,
+            "actual": 2 if score >= 35 else 1,
+            "note": f"Gap này được sinh từ yêu cầu JD: {requirement}",
+        })
+        existing_gap_keys.add(label_key)
+
+    ai_report["gaps"] = filtered_gaps
 
 
 def score_role_alignment(job_obj: JobDescription | None, cv_haystack: str) -> tuple[float, str, str]:
@@ -618,6 +754,7 @@ def calculate_hybrid_match_score(
         llm_score=llm_score,
         embedding_score=embedding_score,
         role_mismatch_level=role_mismatch_level,
+        itss_category_mismatch_level=itss_category_mismatch_level,
         ai_status=ai_status,
         report_source=report_source,
         requirement_count=len(requirement_scores),
@@ -872,6 +1009,11 @@ async def async_process_cv_pipeline(application_id: str, file_url: str):
         f"llm_match_score={llm_score}%, "
         f"final_match_score={final_score}%, "
         f"role_mismatch_level={hybrid_result.get('role_mismatch_level')}"
+    )
+    sanitize_ai_report_gaps(
+        extracted_data,
+        hybrid_result.get("requirement_scores", []),
+        job_obj.requirements_text or jd_text,
     )
 
     evaluation_result = build_evaluation_result(

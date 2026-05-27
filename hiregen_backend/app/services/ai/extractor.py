@@ -1,13 +1,15 @@
 import asyncio
 import json
+import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from app.services.ai.config import client
 
 
-PROMPT_VERSION = "gemini_cv_extract_vi_v3"
+PROMPT_VERSION = "gemini_cv_extract_vi_v4"
 GEMINI_RETRY_DELAYS = [10, 30, 60]
+EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
 
 class AIReportPayload(BaseModel):
@@ -59,6 +61,11 @@ def validate_extracted_payload(raw_text: str) -> dict:
                 combined_skills.extend(normalized[key])
         normalized["skills"] = list(dict.fromkeys(str(skill).strip() for skill in combined_skills if str(skill).strip()))
 
+    personal_info = normalized.get("personal_info")
+    if isinstance(personal_info, dict):
+        email = str(personal_info.get("email") or "").strip()
+        personal_info["email"] = email if EMAIL_PATTERN.match(email) else ""
+
     normalized["prompt_version"] = PROMPT_VERSION
     return normalized
 
@@ -103,6 +110,12 @@ async def extract_cv_to_json(cv_text: str, jd_text: str = "") -> dict:
     ai_report.recommendation, and ai_report.ai_questions in Vietnamese.
     The match score must reflect fit for the target JD, not general IT strength. Penalize clear role or ITSS category
     mismatch even when the candidate has strong adjacent technical skills.
+    Extract personal_info.email only from text that is clearly an email address with an @ sign and a valid domain.
+    If no email address exists in the CV, return an empty string for email. Never copy phone numbers, student IDs,
+    addresses, URLs, or social handles into personal_info.email. Extract phone numbers only into personal_info.phone.
+    For ai_report.gaps, include only gaps that come directly from explicit JD requirements. Do not invent gaps from
+    technologies found only in the CV, adjacent role expectations, or general best practices when the JD does not ask
+    for them.
     Separate these two tasks clearly:
     1. Predict the candidate's ITSS category and ITSS level from the CV evidence only.
     2. Assess how well that candidate fits the current JD.
@@ -121,8 +134,8 @@ async def extract_cv_to_json(cv_text: str, jd_text: str = "") -> dict:
     {{
       "personal_info": {{
         "full_name": "Candidate full name",
-        "email": "Email",
-        "phone": "Phone number"
+        "email": "Email address only; empty string if not found",
+        "phone": "Phone number only"
       }},
       "education": [
         {{
@@ -167,10 +180,10 @@ async def extract_cv_to_json(cv_text: str, jd_text: str = "") -> dict:
         ],
         "gaps": [
           {{
-            "skill": "AWS",
+            "skill": "Tên yêu cầu còn thiếu trong JD",
             "required": 4,
             "actual": 2,
-            "note": "Giải thích bằng tiếng Việt vì sao gap này quan trọng và HR nên xác minh thế nào"
+            "note": "Chỉ tạo gap nếu yêu cầu này xuất hiện rõ trong JD."
           }}
         ],
         "strengths": ["Thế mạnh cụ thể từ CV bằng tiếng Việt"],

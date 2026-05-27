@@ -1,5 +1,7 @@
 import json
 import io
+import re
+import uuid
 from minio import Minio
 from minio.error import S3Error
 from app.core.config import settings
@@ -62,6 +64,15 @@ class MinIOService:
         except Exception as e:
             print(f"[MinIO Upload Exception] Chi tiết lỗi: {str(e)}")
             raise Exception(f"Lỗi upload file lên MinIO: {str(e)}")
+
+    def build_unique_object_name(self, prefix: str, owner_id: str, filename: str | None) -> str:
+        safe_filename = (filename or "upload").replace("\\", "/").split("/")[-1].strip()
+        safe_filename = re.sub(r"[^A-Za-z0-9._-]+", "_", safe_filename).strip("._")
+        if not safe_filename:
+            safe_filename = "upload"
+
+        safe_prefix = prefix.strip("/") or "uploads"
+        return f"{safe_prefix}/{owner_id}/{uuid.uuid4().hex}_{safe_filename}"
 
     def get_file_data(self, object_name: str) -> bytes:
         """

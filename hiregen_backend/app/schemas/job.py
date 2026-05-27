@@ -22,6 +22,11 @@ class JobCreate(JobBase):
 class JobUpdate(BaseModel):
     title: Optional[str] = Field(None, max_length=255, description="Tiêu đề công việc")
     description_text: Optional[str] = Field(None, description="Nội dung công việc")
+    location: Optional[str] = None
+    salary_range: Optional[str] = None
+    deadline: Optional[datetime] = None
+    requirements_text: Optional[str] = None
+    benefits_text: Optional[str] = None
     visibility: Optional[str] = Field(None, description="public hoặc private")
     itss_category: Optional[str] = None
     itss_level: Optional[int] = None

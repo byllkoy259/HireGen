@@ -1,4 +1,3 @@
-import uuid
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from app.api.deps import get_current_user
 from app.models.models import User
@@ -18,11 +17,15 @@ async def upload_file_api(
         # Giới hạn dung lượng (tùy chọn) hoặc để config mặc định của FastAPI
         file_data = await file.read()
         
-        new_filename = file.filename
+        object_name = minio_service.build_unique_object_name(
+            prefix="uploads",
+            owner_id=str(current_user.id),
+            filename=file.filename,
+        )
         
         # Đẩy file lên MinIO
         file_url = minio_service.upload_file(
-            object_name=new_filename,
+            object_name=object_name,
             file_data=file_data,
             content_type=file.content_type
         )

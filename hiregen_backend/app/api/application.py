@@ -131,6 +131,7 @@ def build_confidence_fallback(
     requirement_scores = evaluation_result.get("requirement_scores") or []
     requirement_count = len(requirement_scores) if isinstance(requirement_scores, list) else 0
     role_mismatch_level = evaluation_result.get("role_mismatch_level") or "UNKNOWN"
+    itss_category_mismatch_level = evaluation_result.get("itss_category_mismatch_level") or "UNKNOWN"
 
     if ai_status != "processed":
         confidence -= 30
@@ -162,9 +163,23 @@ def build_confidence_fallback(
         confidence -= 10
         reasons.append("Hồ sơ có dấu hiệu lệch nhóm vai trò/ITSS đáng kể.")
 
-    if embedding_score is not None and embedding_score < 20 and llm_score is not None and llm_score >= 75:
+    if itss_category_mismatch_level == "HIGH":
+        confidence -= 20
+        reasons.append("ITSS category dự đoán lệch mạnh so với JD.")
+    elif itss_category_mismatch_level == "MEDIUM":
         confidence -= 10
-        reasons.append("Embedding similarity thấp trong khi LLM đánh giá cao.")
+        reasons.append("ITSS category dự đoán chỉ tương thích một phần với JD.")
+
+    if embedding_score is not None:
+        if embedding_score < 20:
+            confidence -= 20
+            reasons.append("Embedding similarity rất thấp so với yêu cầu JD.")
+            if llm_score is not None and llm_score >= 75:
+                confidence -= 10
+                reasons.append("LLM đánh giá cao nhưng embedding thấp, cần HR xác minh thủ công.")
+        elif embedding_score < 35:
+            confidence -= 10
+            reasons.append("Embedding similarity thấp, độ tin cậy cần được giảm.")
 
     confidence = clamp_report_score(confidence)
     if confidence >= 75:
